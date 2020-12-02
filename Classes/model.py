@@ -27,10 +27,16 @@ class KSModel(Model):
 
         # lists to keep track of the unique_ids of each agent type. For quick lookup
         self.ids_firms1 = []
+        self.firms1 = []
         self.ids_firms2 = []
+        self.firms2 = []
+        self.firms_1_2 = []
         self.ids_households = []
+        self.households = []
         self.ids_region0 = []
         self.ids_region1 = []
+        self.governments = []
+        
 
 
         # stages of activation
@@ -39,14 +45,14 @@ class KSModel(Model):
         self.schedule = StagedActivationByType(self, stage_list)
         #self.schedule = StagedActivation(self, stage_list)         # schedule._agents is an OrderedDict() ; type: Dict[unique_id, Agent]
         self.initial_amount_capital = 1
-        self.running = True
+        #self.running = True
         self.grid = MultiGrid(width, height, True)
         self.initial_productivity = 1
         self.initial_number_of_machines = 1
         self.initial_wages = 1
         #self.capital_depreciation_rate = 0.02
         self.capital_output_ratio = B
-        self.initial_net_worth = 600
+        self.initial_net_worth = 6000
         self.start_migration = 15
         self.debt_sales_ratio = 2
         self.interest_rate = 0.01
@@ -64,18 +70,20 @@ class KSModel(Model):
                 a = CapitalGoodFirm(i, self)
                 self.schedule.add(a)
                 self.ids_firms1.append(i)    # keep track of the unique_id
-
+                self.firms1.append(a)
             # add consumption-good firms
             elif i < self.num_firms1 + self.num_firms2:
                 a = ConsumptionGoodFirm(i, self)
                 self.schedule.add(a)
                 self.ids_firms2.append(i)
+                self.firms2.append(a)
 
             # add households
             else:
                 a = Household(i, self)
                 self.schedule.add(a)
                 self.ids_households.append(i)
+                self.households.append(a)
 
             # place the agent in the grid
             x = 0
@@ -91,10 +99,14 @@ class KSModel(Model):
                 self.ids_region0.append(i)
             elif y == 1:
                 self.ids_region1.append(i)
+        
+        self.firms_1_2 = self.firms1 + self.firms2
+        #print(self.firms_1_2)
         for i in range(2):  
             u_id = len(self.schedule.agents)                  
             a = Government(u_id, self, i)   #passing region=i into the constructor
             self.schedule.add(a)
+            self.governments.append(a)
             self.grid.place_agent(a, (0,i))
             self.num_agents += 1
             #a.region = i
@@ -115,7 +127,7 @@ class KSModel(Model):
                 #"Productivity_A1" : productivity_a1, # machine productivity in sector 1
                 #"Productivity_B1" : productivity_b1,  # labor productivity in sector 1
                 #"Climate_shock" : climate_shock_generator,
-                "Unemployment_Regional" : regional_unemployment_rate,
+             
                 # "Unemployment_Region0" : regional_unemployment_rate_region0,
                 "Average_Salary" : regional_average_salary,
                 "Average_Salary_Capital" : regional_average_salary_cap,
@@ -123,6 +135,7 @@ class KSModel(Model):
                 "Competitiveness_Regional" : regional_average_competitiveness,
                 "Aggregate_Employment" : regional_aggregate_employment,
                 "Aggregate_Unemployment" : regional_aggregate_unemployment,
+                "Unemployment_Regional" : regional_unemployment_rate,
                 "Regional_unemployment_subsidy": regional_unemployment_subsidy,
                 #"Population_Regional" : regional_population_total,
                 "Population_Regional_Households" : regional_population_households,
@@ -131,19 +144,19 @@ class KSModel(Model):
                 #"Population_Region0_Cons_Firms" : regional_population_cons_region_0,
                 "Population_Regional_Cap_Firms" : regional_population_cap,
                 "Capital_Regional" : regional_capital,
-                "lol" : regional_unemployment_rate_region10,
+                "Investmen_units" : investment_units,
                 #"Investment_units" : investment_units,
                 "Capital_firms_av_prod" : productivity_capital_firms_average,
                 #"Capital_firms_av_prod_region_1" : productivity_capital_firms_region_1_average,
                 "Regional_average_productivity" : productivity_firms_average,
                 "Consumption_firms_av_prod" : productivity_consumption_firms_average,
-                "Cosumption_price_average" : price_average,
+                "Cosumption_price_average" : price_average_cons,
                  "Capital_price_average" : price_average_cap,
                 "GDP": gdp,
                 "RD_CCA_INVESTMENT" : RD_CCA_investment,
                 "Average_CCA_coeff" :  RD_coefficient_average,
-                'Sectoral_debt': sectoral_aggregate_debt, 
-                 'Sectoral_liquid_assets': sectoral_aggregate_liquid_assets,
+                #'Sectoral_debt': sectoral_aggregate_debt, 
+                # 'Sectoral_liquid_assets': sectoral_aggregate_liquid_assets,
                 "GDP_cons": gdp_cons,
                 "GDP_cap": gdp_cap,
                 "CONSUMPTION" : consumption,
@@ -155,9 +168,9 @@ class KSModel(Model):
                   "Regional_average_profits_cap": regional_average_profits_cap,
                   "Regional_average_NW" : regional_average_nw,
                   "Capital_price_average" : price_average_cap,
-                  "Regional_profits_cap" :regional_profits_cap,
+                 # "Regional_profits_cap" :regional_profits_cap,
                   "Regional_profits_cons" : regional_profits_cons,
-                 "labor check " : consumption_labor_check,
+                 #"labor check " : consumption_labor_check,
                  "Cons_regional_IDs" : cons_ids_region,
                  "Firms_regions" :firm_region,
                  "Minimum_wage" : regional_minimum_wage,

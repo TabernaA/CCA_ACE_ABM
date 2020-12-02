@@ -375,13 +375,20 @@ class ConsumptionGoodFirm(Agent):
     The firm retrives normalized competiveness from the government, that does it at central level and calculate its market share
     '''
     def market_share_calculation(self):
-        
+        '''
         agents = self.model.schedule.agents
         for i in range(len(agents)):
             if agents[i].type == "Gov" and agents[i].region == 0:
+                
                 self.competitiveness[0] = agents[i].comp_normalized[self.unique_id][0]
                 self.competitiveness[1] =  agents[i].comp_normalized[self.unique_id][1]
                 avg_comp = agents[i].average_normalized_comp
+        '''
+        
+        gov = self.model.governments[0]
+        self.competitiveness[0] = gov.comp_normalized[self.unique_id][0]
+        self.competitiveness[1] = gov.comp_normalized[self.unique_id][1]
+        avg_comp = gov.average_normalized_comp
         #print( "cons fir ", self.unique_id, "av comp is ", avg_comp, "my norm comp is ", self.competitiveness)
         # my new market share in both regions
         #print("ConsGodsFirm",self.unique_id, "market shares  normalized old ", self.market_share)
@@ -599,11 +606,17 @@ class ConsumptionGoodFirm(Agent):
     The firm retrives normalized price and unfilled demand (used to calculate competitiveness) from the government, that does it at central level
     '''
     def price_demand_normalized(self):
+        '''
         agents = self.model.schedule.agents
         for i in range(len(agents)):
             if agents[i].type == "Gov" and agents[i].region == 0:
                 self.normalized_price = round(agents[i].norm_price_unfilled_demand[self.unique_id][0], 6)  + 0.00001
                 self.unfilled_demand = round(agents[i].norm_price_unfilled_demand[self.unique_id][1], 6)
+        '''
+        gov = self.model.governments[0]
+        self.normalized_price = round(gov.norm_price_unfilled_demand[self.unique_id][0], 6)  + 0.00001
+        self.unfilled_demand = round(gov.norm_price_unfilled_demand[self.unique_id][1], 6)
+        
         #print("Cons firm", self.unique_id, "region ", self.region,"normalized price", self.normalized_price, "normalized unfilled demand", self.unfilled_demand )
 
 
@@ -611,12 +624,17 @@ class ConsumptionGoodFirm(Agent):
     The firm retrives normalized market shares from the government, that does it at central level
     '''
     def market_share_normalized(self):
+        '''
         agents = self.model.schedule.agents
         for i in range(len(list(agents))):
         #for i in range(len(agents)):
             if agents[i].type == "Gov" and agents[i].region == 0:
                 self.market_share[0] = round(agents[i].market_shares_normalized[self.unique_id][0], 6)
                 self.market_share[1] = round(agents[i].market_shares_normalized[self.unique_id][1], 6)
+        '''
+        gov = self.model.governments[0]                
+        self.market_share[0] = round(gov.market_shares_normalized[self.unique_id][0], 6)
+        self.market_share[1] = round(gov.market_shares_normalized[self.unique_id][1], 6)
         
         self.market_share_history.append(round(sum(self.market_share), 6))
         #print( "new market share ", self.market_share, "cons", self.unique_id, "region", self.region ) #, self.market_share_history)

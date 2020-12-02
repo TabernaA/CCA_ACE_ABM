@@ -78,7 +78,7 @@ class CapitalGoodFirm(Agent):
     '''
     def calculatePrice(self, markup=0.1):
         self.price = 1+markup * self.cost
-        print("my cap price is ", self.price)
+        #print("my cap price is ", self.price)
 
 
     ''' 
@@ -368,10 +368,15 @@ class CapitalGoodFirm(Agent):
     Update my market share so that it's normalized
     '''
     def market_share_normalized(self):
+        '''
         agents = self.model.schedule.agents
         for i in range(len(agents)):
             if agents[i].type == "Gov" and agents[i].region == 0:
                 self.market_share[0] = agents[i].market_shares_normalized_cap[self.unique_id]
+        '''
+        gov = self.model.governments[0]
+        self.market_share[0] = gov.market_shares_normalized_cap[self.unique_id]
+        
                 
 
     def climate_damages(self):
