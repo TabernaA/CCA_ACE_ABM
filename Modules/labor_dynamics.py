@@ -180,7 +180,7 @@ def hire_and_fire(labor_demand, employees_IDs, open_vacancies, model, id):
     elif desired_employees < len(employees_IDs):
         open_vacancies = False
         firing_employees = abs( desired_employees - len(employees_IDs))
-        print("firing employees", firing_employees)
+        #print("firing employees", firing_employees)
         for i in range( int(firing_employees)):
             j = employees_IDs[0]
             employee = model.schedule.agents[employees_IDs[0]]

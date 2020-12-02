@@ -273,22 +273,7 @@ def regional_average_nw(model):
     #print(" Average NW are  ", [NW0 / firms0, NW1 / firms1])
     return [round(NW0 / firms0, 2), round(NW1 / firms1, 2)]  
     
-def productivity_firms_average(model):
-    productivity0 = 0
-    firms0 = 0.00001
-    productivity1 = 0
-    firms1 = 0.00001
-    a = model.schedule.agents
-    for i in range(len(a)):
-        if type(a[i]) is ConsumptionGoodFirm or type(a[i]) is CapitalGoodFirm:
-            if a[i].region == 0:
-                productivity0 += a[i].productivity[1]  * sum(a[i].market_share) # len(a[i].employees_IDs) a[i].market_share[0] #
-               # firms0 += 1 * len(a[i].employees_IDs)
-            if a[i].region == 1:
-                productivity1 += a[i].productivity[1]  *  sum(a[i].market_share) #len(a[i].employees_IDs) # a[i].market_share[1] # len(a[i].employees_IDs)
-               # firms1 += 1 * len(a[i].employees_IDs)
-    #print( "Average prod  region 0, 1 is ", [productivity0 / firms0, productivity1 / firms1])           
-    return [round(productivity0 / 2, 4), round(productivity1/ 2, 4)]
+
 
 def sectoral_aggregate_liquid_assets(model):
     LA_cap0 = [a.net_worth for a in model.schedule.agents if a.type == "Cap" and a.region == 0]

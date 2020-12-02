@@ -57,15 +57,17 @@ def innovate(IN, prod, Z=0.3, a=3, b=3, x_low=-0.15, x_up=0.15):
     in_productivity = [0,0]
 
     # Bernoulli draw to determine success (1) or failure (0)
-    p = 1-math.exp(-Z*IN/2)
-    p1 = 1-math.exp(-Z*IN/2)
+    p = 1-math.exp(-Z*IN)
+    #p1 = 1-math.exp(-Z*IN/2)
     #print( "P ", p , "b", b)
     if bernoulli.rvs(p) == 1:
         # new machine productivity (A) from innovation
-        in_productivity[0] = prod[0] * (1 + x_low + beta.rvs(a,b)*(x_up-x_low))
+        a = (1 + x_low + beta.rvs(a,b)*(x_up-x_low))
+        in_productivity[0] = prod[0] * a
+        print(a)
         
 
-    if bernoulli.rvs(p1) == 1: # new production productivity (B) from innovation
+   # if bernoulli.rvs(p1) == 1: # new production productivity (B) from innovation
         in_productivity[1] = prod[1] * (1 + x_low + beta.rvs(a,b)*(x_up-x_low))
 
     return in_productivity
