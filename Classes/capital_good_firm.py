@@ -54,6 +54,7 @@ class CapitalGoodFirm(Agent):
         self.client_IDs = []
         self.lifecycle = 0
         self.RD_budget = 0
+        self.productivity_list = []
     
         # climate change #
         self.CCA_resilience = [1,1] 
@@ -104,6 +105,7 @@ class CapitalGoodFirm(Agent):
         #print("In ", self.IN, "IM ", self.IM)
         # step 4: choose best technology to adopt
         self.previous_productivity = self.productivity
+        self.productivity_list.append([ self.productivity[0], in_productivity[0], im_productivity[0]])
         self.productivity[0] = round(max(self.productivity[0], in_productivity[0], im_productivity[0]), 3)
         self.productivity[1] = round(max(self.productivity[1], in_productivity[0], im_productivity[1]) , 3)
         
@@ -462,7 +464,8 @@ class CapitalGoodFirm(Agent):
         #    self.CCA_RD()
         if self.lifecycle > 0:
             #print(self.region, self.productivity)
-            self.RD()
+            if self.sales > 0:
+                self.RD()
             self.calculateProductionCost()
             self.calculatePrice()
             self.advertise()
@@ -492,8 +495,8 @@ class CapitalGoodFirm(Agent):
 
     def stage6(self):
         
-        if self.model.schedule.time > self.model.start_migration:
-            self.migrate()
+        #if self.model.schedule.time > self.model.start_migration:
+         #   self.migrate()
             
         '''           
         if self.model.S > 0:

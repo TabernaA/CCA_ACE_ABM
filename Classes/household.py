@@ -95,7 +95,7 @@ class Household(Agent):
        # if self.model.schedule.time > 50:
            # if self.employer_ID is not None:
                 #if self.employer_ID % 10 != 0:
-        self.migration()
+        #self.migration()
             #else:
              #   self.migration()
         

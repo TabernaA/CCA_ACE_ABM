@@ -42,11 +42,11 @@ class KSModel(Model):
         self.running = True
         self.grid = MultiGrid(width, height, True)
         self.initial_productivity = 1
-        self.initial_number_of_machines = 10
+        self.initial_number_of_machines = 1
         self.initial_wages = 1
         #self.capital_depreciation_rate = 0.02
         self.capital_output_ratio = B
-        self.initial_net_worth = 6000
+        self.initial_net_worth = 600
         self.start_migration = 15
         self.debt_sales_ratio = 2
         self.interest_rate = 0.01

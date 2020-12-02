@@ -744,8 +744,8 @@ class ConsumptionGoodFirm(Agent):
 
     def stage6(self):
         
-        if self.model.schedule.time > self.model.start_migration:
-            self.migrate()
+        #if self.model.schedule.time > self.model.start_migration:
+         #   self.migrate()
         '''
         if  self.model.S > 0:
             self.climate_damages()
