@@ -14,26 +14,26 @@ from model.classes.household import Household
 def gdp_cap(model):
     GDP0 = 0
     GDP1 = 0
-    agents = model.schedule.agents
+    agents = model.firms1
     for i in range(len(agents)):
         firm = agents[i]
-        if firm.type == "Cap":
-            if firm.region == 0:
-               GDP0 += firm.production_made * firm.price
-            elif firm.region == 1:
-                GDP1 += firm.production_made * firm.price
+        #if firm.type == "Cap":
+        if firm.region == 0:
+            GDP0 += firm.production_made * firm.price
+        elif firm.region == 1:
+            GDP1 += firm.production_made * firm.price
     return[ round(GDP0, 3), round(GDP1, 3), GDP0 + GDP1]
 
 
 
 def RD_CCA_investment(model):
     RD_CCA = 0 
-    agents = model.schedule.agents
+    agents = model.firms_1_2 # model.schedule.agents
     for i in range(len(agents)):
         firm = agents[i]
-        if firm.type == "Cap" or firm.type == "Cons"  :
-            if firm.region == 0:
-               RD_CCA += firm.CCA_RD_budget
+        #if firm.type == "Cap" or firm.type == "Cons"  :
+        if firm.region == 0:
+            RD_CCA += firm.CCA_RD_budget
     return round(RD_CCA)
 
 
@@ -43,41 +43,41 @@ def RD_coefficient_average(model):
     RD0= 0 
     RD1= 0 
     firms = 0
-    agents = model.schedule.agents
+    agents = model.firms_1_2 # model.schedule.agents
     for i in range(len(agents)):
         firm = agents[i]
-        if firm.type == "Cap" or firm.type == "Cons"  :
-            if firm.region == 0:
-               RD0 += firm.CCA_resilience[1]
-               RD1 += firm.CCA_resilience[1]
-               firms += 1
+        #if firm.type == "Cap" or firm.type == "Cons"  :
+        if firm.region == 0:
+            RD0 += firm.CCA_resilience[1]
+            RD1 += firm.CCA_resilience[1]
+            firms += 1
                
     return[RD0/ firms , RD1 / firms]
 
 def gdp_cons(model):
     GDP0 = 0
     GDP1 = 0
-    agents = model.schedule.agents
+    agents = model.firms2 #model.schedule.agents
     for i in range(len(agents)):
         firm = agents[i]
-        if firm.type == "Cons":
-            if firm.region == 0:
-               GDP0 += firm.price * firm.production_made
-            elif firm.region == 1:
-                GDP1 += firm.price * firm.production_made
+        #if firm.type == "Cons":
+        if firm.region == 0:
+            GDP0 += firm.price * firm.production_made
+        elif firm.region == 1:
+            GDP1 += firm.price * firm.production_made
     return[ round(GDP0, 3), round(GDP1, 3), GDP0 + GDP1]
 
 def RD_total(model):
     RD0 = 0
     RD1 = 0
-    agents = model.schedule.agents
+    agents = model.firms1 #model.schedule.agents
     for i in range(len(agents)):
         firm = agents[i]
-        if firm.type == "Cap":
-            if firm.region == 0:
-               RD0 += firm.RD_budget
-            elif firm.region == 1:
-               RD1 += firm.RD_budget
+        #if firm.type == "Cap":
+        if firm.region == 0:
+            RD0 += firm.RD_budget
+        elif firm.region == 1:
+            RD1 += firm.RD_budget
     return[ round(RD0, 5), round(RD1, 5), RD0 + RD1]
 
 
@@ -87,41 +87,41 @@ def RD_total(model):
 def gdp(model):
     GDP0 = 0
     GDP1 = 0
-    agents = model.schedule.agents
+    agents = model.firms_1_2 #model.schedule.agents
     for i in range(len(agents)):
         firm = agents[i]
-        if firm.type == "Cons" or firm.type == "Cap":
-            if firm.region == 0:
-               GDP0 += firm.price * firm.production_made
-            elif firm.region == 1:
-                GDP1 += firm.price * firm.production_made
+        #if firm.type == "Cons" or firm.type == "Cap":
+        if firm.region == 0:
+            GDP0 += firm.price * firm.production_made
+        elif firm.region == 1:
+            GDP1 += firm.price * firm.production_made
     return[ round(GDP0, 3), round(GDP1, 3), GDP0 + GDP1]
                 
 def investment(model):
     I0 = 0
     I1 = 0
-    agents = model.schedule.agents
+    agents = model.firms2  #model.schedule.agents
     for i in range(len(agents)):
         firm = agents[i]
-        if firm.type == "Cons":
-            if firm.region == 0:
-                I0 += firm.investment_cost
-            elif firm.region == 1:
-                I1 += firm.investment_cost
+        #if firm.type == "Cons":
+        if firm.region == 0:
+            I0 += firm.investment_cost
+        elif firm.region == 1:
+            I1 += firm.investment_cost
     return[ round(I0, 3), round(I1, 3), I0 + I1]
 
 def inventories(model):
     INV0 = 0
     INV1 = 0
     inventories_evolution = [[0,0],[0,0]]
-    agents = model.schedule._agents
+    agents = model.firms2  #model.schedule._agents
     for i in range(len(agents)):
         firm = agents[i]
-        if firm.type == "Cons":
-            if firm.region == 0:
-                INV0 += firm.inventories * firm.price
-            elif firm.region == 1:
-                INV0 += firm.inventories * firm.price
+        #if firm.type == "Cons":
+        if firm.region == 0:
+            INV0 += firm.inventories * firm.price
+        elif firm.region == 1:
+            INV1 += firm.inventories * firm.price
     inventories_evolution.append([INV0,INV1])
     delta_inventories0 = inventories_evolution[-2][0] - inventories_evolution[-1][0]
     delta_inventories1 = inventories_evolution[-2][1] - inventories_evolution[-1][1]
@@ -175,6 +175,7 @@ def consumption_labor_check(model):
     #print("Aggregare employment looking at Cap regions 0,1:", [CAE0, CAE1, CAE1 + CAE0 ])
     return [[HE0, HE1, HE1 + HE0 ] ,  [COE0, COE1, COE1 + COE0 ] , [CAE0, CAE1, CAE1 + CAE0 ] ]
 
+'''
 def price_average_cons(model):
     price0 = 0
     price1 = 0
@@ -190,7 +191,8 @@ def price_average_cons(model):
                 price1 += a.price * a.production_made
                 firms1 += a.production_made 
     #print("Average cons price ", [price0 / firms0, price1 / firms1])
-    return [ round(price0 / firms0, 4), round(price1 / firms1, 4)]      
+    return [ round(price0 / firms0, 4), round(price1 / firms1, 4)]   
+'''   
 
 
 def regional_average_profits_cons(model):
@@ -198,31 +200,34 @@ def regional_average_profits_cons(model):
     profit1 = 0
     firms0 = 0.0001
     firms1 = 0.0001
-    for i in range(len(model.schedule.agents)):
-        a = model.schedule.agents[i]
-        if a.type == "Cons":
-            if a.region == 0:
-                profit0 += a.profits #* a.production_made
-                firms0 += 1
-            elif a.region == 1:
-                profit1 += a.profits # * a.production_made
-                firms1 += 1
+    agents = model.firms2 
+    for i in range(len(agents)):
+        a = agents[i]
+        #if a.type == "Cons":
+        if a.region == 0:
+            profit0 += a.profits #* a.production_made
+            firms0 += 1
+        elif a.region == 1:
+            profit1 += a.profits # * a.production_made
+            firms1 += 1
     #print(" Average profits are  ", [profit0 / firms0, profit1 / firms1])
     return [round(profit0 / firms0, 4), round(profit1 / firms1, 4)]  
+
 def regional_average_profits_cap(model):
     profit0 = 0
     profit1 = 0
     firms0 = 0.0001
     firms1 = 0.0001
-    for i in range(len(model.schedule.agents)):
-        a = model.schedule.agents[i]
-        if a.type == "Cap":
-            if a.region == 0:
-                profit0 += a.profits #* a.production_made
-                firms0 += 1
-            elif a.region == 1:
-                profit1 += a.profits # * a.production_made
-                firms1 += 1
+    agents = model.firms1
+    for i in range(len(agents)):
+        a = agents[i]
+        #if a.type == "Cap":
+        if a.region == 0:
+            profit0 += a.profits #* a.production_made
+            firms0 += 1
+        elif a.region == 1:
+            profit1 += a.profits # * a.production_made
+            firms1 += 1
     #print(" Average profits are  ", [profit0 / firms0, profit1 / firms1])
     return [round(profit0 / firms0, 4), round(profit1 / firms1, 4)]  
 
@@ -230,16 +235,19 @@ def regional_average_profits_cap(model):
 def regional_profits_cons(model):
     profit0 = 0
     profit1 = 0
-    for i in range(len(model.schedule.agents)):
-        a = model.schedule.agents[i]
-        if a.type == "Cons":
-            if a.region == 0:
-                profit0 += a.profits #* a.production_made
-            elif a.region == 1:
-                profit1 += a.profits # * a.production_made
+    agents = model.firms2
+    for i in range(len(agents)):
+        a = agents[i]
+        #if a.type == "Cons":
+        if a.region == 0:
+            profit0 += a.profits #* a.production_made
+        elif a.region == 1:
+            profit1 += a.profits # * a.production_made
     #print("Total profits cons are  ", [profit0, profit1])
     return [round(profit0, 4), round(profit1, 4)]  
 
+
+'''
 def regional_profits_cap(model):
     profit0 = 0
     profit1 = 0
@@ -252,7 +260,7 @@ def regional_profits_cap(model):
                 profit1 += a.profits # * a.production_made
    # print(" Total profits cap are  ", [profit0, profit1])
     return [round(profit0, 4), round(profit1, 4)]  
-
+'''
 
 
 
@@ -261,20 +269,21 @@ def regional_average_nw(model):
     NW1 = 0
     firms0 = 0.0001
     firms1 = 0.0001
-    for i in range(len(model.schedule.agents)):
-        a = model.schedule.agents[i]
-        if a.type == "Cons":
-            if a.region == 0:
-                NW0 += a.net_worth # * a.production_made
-                firms0 += 1
-            elif a.region == 1:
-                NW1 += a.net_worth # * a.production_made
-                firms1 += 1
+    agents = model.firms2
+    for i in range(len(agents)):
+        a = agents[i]
+        #if a.type == "Cons":
+        if a.region == 0:
+            NW0 += a.net_worth # * a.production_made
+            firms0 += 1
+        elif a.region == 1:
+            NW1 += a.net_worth # * a.production_made
+            firms1 += 1
     #print(" Average NW are  ", [NW0 / firms0, NW1 / firms1])
     return [round(NW0 / firms0, 2), round(NW1 / firms1, 2)]  
     
 
-
+'''
 def sectoral_aggregate_liquid_assets(model):
     LA_cap0 = [a.net_worth for a in model.schedule.agents if a.type == "Cap" and a.region == 0]
     LA_cap1 = [a.net_worth for a in model.schedule.agents if a.type == "Cap" and a.region == 1]
@@ -287,7 +296,7 @@ def sectoral_aggregate_debt(model):
     debt_cons0 = [a.debt for a in model.schedule.agents if a.type == "Cons" and a.region == 0]
     debt_cons1 = [a.debt for a in model.schedule.agents if a.type == "Cons" and a.region == 1]
     return [[debt_cap, sum(debt_cons0)], [debt_cap, sum(debt_cons1)]]
-
+'''
 def cons_ids_region(model):
     region0_IDs = [ a.unique_id for a in model.schedule.agents if a.type =="Cons" and a.region == 0 ]
     region1_IDs = [ a.unique_id for a in model.schedule.agents if a.type == "Cons" and a.region == 1 ]
@@ -302,10 +311,10 @@ def cons_ids_region(model):
     return[region0_IDs, region1_IDs]
 
 def firm_region(model):
-    region0_cap = [ [a, a.unique_id]  for a in model.schedule.agents if a.type == "Cap" and a.region == 0 ]
-    region1_cap = [ [a, a.unique_id] for a in model.schedule.agents if  a.type == "Cap"  and a.region == 1 ]
-    region0_cons = [ [a, a.unique_id] for a in model.schedule.agents if a.type == "Cons" and a.region == 0 ]
-    region1_cons = [ [a, a.unique_id] for a in model.schedule.agents if  a.type == "Cons"  and a.region == 1 ]
+    region0_cap = [ [a, a.unique_id]  for a in model.firms1 if  a.region == 0 ]
+    region1_cap = [ [a, a.unique_id] for a in model.firms1 if  a.region == 1 ]
+    region0_cons = [ [a, a.unique_id] for a in model.firms2 if a.region == 0 ]
+    region1_cons = [ [a, a.unique_id] for a in model.firms2 if  a.region == 1 ]
     '''
     last0 = max(region0_IDs)
     last1 = max(region1_IDs)

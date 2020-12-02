@@ -60,15 +60,15 @@ def productivity_firms_average(model):
     firms0 = 0.00001
     productivity1 = 0
     firms1 = 0.00001
-    a = model.schedule.agents
+    a = model.firms_1_2 #model.schedule.agents
     for i in range(len(a)):
-        if type(a[i]) is ConsumptionGoodFirm or type(a[i]) is CapitalGoodFirm:
-            if a[i].region == 0:
-                productivity0 += a[i].productivity[1] # * sum(a[i].market_share) # len(a[i].employees_IDs) a[i].market_share[0] #
-                firms0 += 1  # * len(a[i].employees_IDs)
-            if a[i].region == 1:
-                productivity1 += a[i].productivity[1] # *  sum(a[i].market_share) #len(a[i].employees_IDs) # a[i].market_share[1] # len(a[i].employees_IDs)
-                firms1 += 1 #* len(a[i].employees_IDs)
+        #if type(a[i]) is ConsumptionGoodFirm or type(a[i]) is CapitalGoodFirm:
+        if a[i].region == 0:
+            productivity0 += a[i].productivity[1] # * sum(a[i].market_share) # len(a[i].employees_IDs) a[i].market_share[0] #
+            firms0 += 1  # * len(a[i].employees_IDs)
+        if a[i].region == 1:
+            productivity1 += a[i].productivity[1] # *  sum(a[i].market_share) #len(a[i].employees_IDs) # a[i].market_share[1] # len(a[i].employees_IDs)
+            firms1 += 1 #* len(a[i].employees_IDs)
     #print( "Average prod  region 0, 1 is ", [productivity0 / firms0, productivity1 / firms1])           
     return [round(productivity0 / firms0, 4), round(productivity1/firms1, 4)]
 
@@ -77,15 +77,15 @@ def productivity_consumption_firms_average(model):
     firms0 = 0.00001
     productivity1 = 0
     firms1 = 0.00001
-    a = model.schedule.agents
+    a = model.firms2 #model.schedule.agents
     for i in range(len(a)):
-        if type(a[i]) is ConsumptionGoodFirm:
-            if a[i].region == 0:
-                productivity0 += a[i].productivity[1] #* sum(a[i].market_share) #en(a[i].employees_IDs) #a[i].market_share[0]
-                firms0 += 1 # len(a[i].employees_IDs)
-            if a[i].region == 1:
-                productivity1 += a[i].productivity[1] # *  sum(a[i].market_share)
-                firms1 += 1#  len(a[i].employees_IDs)
+        #if type(a[i]) is ConsumptionGoodFirm:
+        if a[i].region == 0:
+            productivity0 += a[i].productivity[1] #* sum(a[i].market_share) #en(a[i].employees_IDs) #a[i].market_share[0]
+            firms0 += 1 # len(a[i].employees_IDs)
+        if a[i].region == 1:
+            productivity1 += a[i].productivity[1] # *  sum(a[i].market_share)
+            firms1 += 1#  len(a[i].employees_IDs)
                 
     return [productivity0/firms0, productivity1/firms1]
 def productivity_capital_firms_average(model):
@@ -93,18 +93,20 @@ def productivity_capital_firms_average(model):
     firms0 = 0.00001
     productivity1 = 0
     firms1 = 0.00001
-    a = model.schedule.agents
+    a = model.firms1
+    #model.schedule.agents
     for i in range(len(a)):
-        if type(a[i]) is CapitalGoodFirm:
-            if a[i].region == 0:
-                productivity0 += a[i].productivity[1] #* sum(a[i].market_share) #en(a[i].employees_IDs) #a[i].market_share[0]
-                firms0 += 1 # len(a[i].employees_IDs)
-            if a[i].region == 1:
-                productivity1 += a[i].productivity[1] # *  sum(a[i].market_share)
-                firms1 += 1 #  len(a[i].employees_IDs)
+        #if type(a[i]) is CapitalGoodFirm:
+        if a[i].region == 0:
+            productivity0 += a[i].productivity[1] #* sum(a[i].market_share) #en(a[i].employees_IDs) #a[i].market_share[0]
+            firms0 += 1 # len(a[i].employees_IDs)
+        if a[i].region == 1:
+            productivity1 += a[i].productivity[1] # *  sum(a[i].market_share)
+            firms1 += 1 #  len(a[i].employees_IDs)
                 
     return [productivity0/firms0, productivity1/firms1]
 
+'''
 def productivity_consumption_firms_region_1_average(model):
     productivity = 0
     firms = 0.00001
@@ -116,21 +118,21 @@ def productivity_consumption_firms_region_1_average(model):
             
     return productivity / firms
 
-
-def regional_unemployment_rate_region10(model):
+'''
+def investment_units(model):
     replacment_investment_units0 = 0
     expansion_investment_units0 = 0
     replacment_investment_units1 = 0
     expansion_investment_units1 = 0
-    agents = model.schedule.agents
+    agents = model.firms2 #model.schedule.agents
     for i in range(len(agents)):
-        if (agents[i].type == "Cons"):
-            if agents[i].region == 0:
-                replacment_investment_units0 += agents[i].replacement_investment_units
-                expansion_investment_units0 += agents[i].expansion_investment_units         
-            if agents[i].region == 1:
-                replacment_investment_units1+= agents[i].replacement_investment_units
-                expansion_investment_units1 += agents[i].expansion_investment_units
+        #if (agents[i].type == "Cons"):
+        if agents[i].region == 0:
+            replacment_investment_units0 += agents[i].replacement_investment_units
+            expansion_investment_units0 += agents[i].expansion_investment_units         
+        if agents[i].region == 1:
+            replacment_investment_units1+= agents[i].replacement_investment_units
+            expansion_investment_units1 += agents[i].expansion_investment_units
                 
     print(replacment_investment_units0 , expansion_investment_units0 , replacment_investment_units1 ,expansion_investment_units1)
     return [ round(replacment_investment_units0, 3) , round(expansion_investment_units0 , 3), round(replacment_investment_units1, 3) ,round(expansion_investment_units1, 3)]
@@ -147,7 +149,12 @@ def climate_shock_generator(model, a=1,b=100):
     return s
 
 
+def regional_unemployment_rate(model):
+    aggr_unemployment =model.datacollector.model_vars["Aggregate_Unemployment"][int(model.schedule.time)] 
+    aggr_employment =model.datacollector.model_vars['Aggregate_Employment'][int(model.schedule.time)]
+    return[ aggr_unemployment[0]/(aggr_unemployment[0] + aggr_employment[0]), aggr_unemployment[1]/(aggr_unemployment[1] + aggr_employment[1])  ]
 
+'''
 # more general function: returns result for both regions
 def regional_unemployment_rate(model):
     unemployed_households0 = 0.00001
@@ -187,24 +194,24 @@ def regional_unemployment_rate_region0(model):
 
     #print("Unemployment rate regions 0,1:", [unemployed_households0 / households_region0, unemployed_households1 / households_region1])
     return unemployed_households0 / households_region0 
-
+'''
 
 
 def regional_aggregate_market_share(model):
     RAMS0 = 0
     RAMS1 = 0
-    agents = model.schedule.agents
+    agents = model.firms2 #model.schedule.agents
     for i in range(len(agents)):
-        if agents[i].type == "Cons":
-            RAMS0 += agents[i].market_share[0]
-            RAMS1 += agents[i].market_share[1]
+        #if agents[i].type == "Cons":
+        RAMS0 += agents[i].market_share[0]
+        RAMS1 += agents[i].market_share[1]
     #print("Aggregate market share region 0,1:", [RAMS0, RAMS1])
     return [round(RAMS0, 4), round(RAMS1,4)]
 
 
 '''
 Normalized market shares for each region
-'''
+
 
 def market_share_normalized(model):
     MS0 = [a.market_share[0] for a in model.schedule.agents if ( a.type == "Cons")]
@@ -222,29 +229,34 @@ def market_share_normalized(model):
     norm_ms_dict = dict(zip(ids, norm_ms))
 
     return norm_ms_dict
-
+'''
 
 
 def regional_minimum_wage(model):
     RMW = 0.0001
+    '''
     agents = model.schedule.agents
-    for i in range(len(agents)):
-        if agents[i].type == "Gov":
+    #for i in range(len(agents)):
+        #if agents[i].type == "Gov":
             if agents[i].region == 0:
-                RMW = agents[i].minimum_wage_region
+    '''
+    gov = model.governments[0]
+    RMW = gov.minimum_wage_region
     #print(" Min wage  0,1:", [round(RMW, 4)])
     return round(RMW, 4)
 
 def regional_unemployment_subsidy(model):
     RUS0 = 0.00001
     RUS1 = 0.00001
-    agents = model.schedule.agents
+
+    agents = model.governments #model.schedule.agents
     for i in range(len(agents)):
-        if agents[i].type == "Gov":
-            if agents[i].region == 0:
-                RUS0 = agents[i].unemployment_subsidy
-            elif agents[i].region == 1:
-                RUS1 = agents[i].unemployment_subsidy
+        #if agents[i].type == "Gov":
+        if agents[i].region == 0:
+            RUS0 = agents[i].unemployment_subsidy
+        elif agents[i].region == 1:
+            RUS1 = agents[i].unemployment_subsidy
+    
     #print("Unemployment subsidy region 0,1:", [round(RUS0, 4), round(RUS1, 4)])
     return [round(RUS0, 4), round(RUS1, 4)]
 
@@ -253,13 +265,13 @@ def regional_unemployment_subsidy(model):
 def regional_aggregate_employment(model):
     ARE0 = 0.00001
     ARE1 = 0.00001
-    agents = model.schedule.agents
+    agents = model.firms_1_2 # model.schedule.agents
     for i in range(len(agents)):
-        if agents[i].type == "Cons" or agents[i].type == "Cap":
-            if agents[i].region == 0:
-                ARE0 += len(agents[i].employees_IDs)
-            elif agents[i].region == 1:
-                ARE1 += len(agents[i].employees_IDs)
+        #if agents[i].type == "Cons" or agents[i].type == "Cap":
+        if agents[i].region == 0:
+            ARE0 += len(agents[i].employees_IDs)
+        elif agents[i].region == 1:
+            ARE1 += len(agents[i].employees_IDs)
     #print("Aggregare employment regions 0,1:", [ARE0, ARE1])
     return [ARE0, ARE1]
 
@@ -267,13 +279,13 @@ def regional_aggregate_employment(model):
 def regional_aggregate_unemployment(model):
     ARE0 = 0.00001
     ARE1 = 0.00001
-    agents = model.schedule.agents
+    agents = model.households #model.schedule.agents
     for i in range(len(agents)):
-        if agents[i].type == "Household" and agents[i].employer_ID == None:
-            if agents[i].region == 0:
-                ARE0 += 1
-            elif agents[i].region == 1:
-                ARE1 += 1
+        #if agents[i].type == "Household" and agents[i].employer_ID == None:
+        if agents[i].region == 0:
+            ARE0 += 1
+        elif agents[i].region == 1:
+            ARE1 += 1
     #print("Aggregare unemployment regions 0,1:", [ARE0, ARE1])
     return [ARE0, ARE1]
 
@@ -312,16 +324,16 @@ def regional_average_salary(model):
     firms0 = 0
     salaries1 = 0
     firms1 = 0
-    agents = model.schedule.agents
+    agents = model.firms_1_2 #model.schedule.agents
     for i in range(len(agents)):
         firm = agents[i]
-        if firm.type == "Cons" or firm.type == "Cap":
-            if firm.region == 0:
-                salaries0 += firm.wage * len(agents[i].employees_IDs)
-                firms0 += 1 * len(agents[i].employees_IDs)
-            elif firm.region == 1:
-                salaries1 += firm.wage * len(agents[i].employees_IDs)
-                firms1 += 1 * len(agents[i].employees_IDs)
+        #if firm.type == "Cons" or firm.type == "Cap":
+        if firm.region == 0:
+            salaries0 += firm.wage * len(agents[i].employees_IDs)
+            firms0 += 1 * len(agents[i].employees_IDs)
+        elif firm.region == 1:
+            salaries1 += firm.wage * len(agents[i].employees_IDs)
+            firms1 += 1 * len(agents[i].employees_IDs)
 
    # print("Agents in region 0:", model.ids_region0)
     #print("Agents in region 1:", model.ids_region1)
@@ -346,15 +358,15 @@ def regional_average_salary_cap(model):
     firms0 = 0
     salaries1 = 0
     firms1 = 0
-    agents = model.schedule.agents
-    for i in range(0,len(agents)):
-        if agents[i].type == "Cap":
-            if agents[i].region == 0:
-                salaries0 += agents[i].wage * len(agents[i].employees_IDs)
-                firms0 += 1 * len(agents[i].employees_IDs)
-            elif agents[i].region == 1:
-                salaries1 += agents[i].wage * len(agents[i].employees_IDs)
-                firms1 += 1 * len(agents[i].employees_IDs)
+    agents =  model.firms1 #model.schedule.agents
+    for i in range(len(agents)):
+        #if agents[i].type == "Cap":
+        if agents[i].region == 0:
+            salaries0 += agents[i].wage * len(agents[i].employees_IDs)
+            firms0 += 1 * len(agents[i].employees_IDs)
+        elif agents[i].region == 1:
+            salaries1 += agents[i].wage * len(agents[i].employees_IDs)
+            firms1 += 1 * len(agents[i].employees_IDs)
 
    # print("Agents in region 0:", model.ids_region0)
     #print("Agents in region 1:", model.ids_region1)
@@ -382,15 +394,15 @@ def regional_average_salary_cons(model):
     firms0 = 0
     salaries1 = 0
     firms1 = 0
-    agents = model.schedule.agents
-    for i in range(0,len(agents)):
-        if agents[i].type == "Cons":
-            if agents[i].region == 0:
-                salaries0 += agents[i].wage * len(agents[i].employees_IDs)
-                firms0 += 1 * len(agents[i].employees_IDs)
-            elif agents[i].region == 1:
-                salaries1 += agents[i].wage * len(agents[i].employees_IDs)
-                firms1 += 1 * len(agents[i].employees_IDs)
+    agents = model.firms2  #model.schedule.agents
+    for i in range(len(agents)):
+        #if agents[i].type == "Cons":
+        if agents[i].region == 0:
+            salaries0 += agents[i].wage * len(agents[i].employees_IDs)
+            firms0 += 1 * len(agents[i].employees_IDs)
+        elif agents[i].region == 1:
+            salaries1 += agents[i].wage * len(agents[i].employees_IDs)
+            firms1 += 1 * len(agents[i].employees_IDs)
 
    # print("Agents in region 0:", model.ids_region0)
     #print("Agents in region 1:", model.ids_region1)
@@ -411,16 +423,20 @@ def regional_average_salary_cons(model):
 
 
 def regional_average_competitiveness(model):
-    
+    '''
     agents = model.schedule.agents
     for i in range(len(agents)):
         if agents[i].type == "Gov" and agents[i].region == 0:
             avg_comp = agents[i].average_normalized_comp
+    '''
+    gov = model.governments[0]
+    avg_comp = gov.average_normalized_comp
     #print("regional avg competitiveness 0,1:", [avg_comp[0], avg_comp[1] ])
     return [round(avg_comp[0], 6), round(avg_comp[1], 6)]
 
 '''
 Population
+'''
 '''
 def regional_population_total(model):
     r0 = 0
@@ -433,38 +449,26 @@ def regional_population_total(model):
             r1 += 1
     return [r0, r1]
 
-
+'''
 def regional_population_households(model):
-    r0 = 0
-    r1 = 0
-    for i in range(len(model.schedule._agents)):
-        a = model.schedule.agents[i]
-        if a.region == 0 and a.type == "Household":
-            r0 += 1
-        elif a.region == 1 and a.type == "Household":
-            r1 += 1
-    return [r0,r1]
+    aggr_unemployment =model.datacollector.model_vars["Aggregate_Unemployment"][int(model.schedule.time)] 
+    aggr_employment =model.datacollector.model_vars['Aggregate_Employment'][int(model.schedule.time)]
+    
+    return[ aggr_unemployment[0] + aggr_employment[0], aggr_unemployment[1] + aggr_employment[1]  ]
 
 
-# should be redundant
-def regional_population_households_region_0(model):
-    r0 = 0
-    r1 = 0
-    for i in range(len(model.schedule._agents)):
-        a = model.schedule._agents[i]
-        if a.region == 0 and a.type == "Household":
-            r0 += 1
-    return r0
+
 
 
 def regional_population_cons(model):
     r0 = 0
     r1 = 0
-    for i in range(len(model.schedule.agents)):
-        a = model.schedule.agents[i]
-        if a.region == 0 and a.type == "Cons":
+    agents = model.firms2 
+    for i in range(len(agents)):
+        a = agents[i]
+        if a.region == 0:
             r0 += 1
-        elif a.region == 1 and a.type == "Cons":
+        elif a.region == 1:
             r1 += 1
     #print("Cap population region 0,1 is ", [r0, r1]) 
     return [r0, r1]
@@ -485,11 +489,12 @@ def regional_population_cons_region_0(model):
 def regional_population_cap(model):
     r0 = 0
     r1 = 0
-    for i in range(len(model.schedule.agents)):
-        a = model.schedule.agents[i]
-        if a.region == 0 and a.type == "Cap":
+    agents = model.firms1
+    for i in range(len(agents)):
+        a = agents[i]
+        if a.region == 0:
             r0 += 1
-        elif a.region == 1 and a.type == "Cap":
+        elif a.region == 1:
             r1 += 1
     #print("Cap population region 0,1 is ", [r0, r1])
     return [r0, r1]
@@ -499,11 +504,12 @@ def regional_population_cap(model):
 def regional_balance(model):
     d0 = 0
     d1 = 0
-    for i in range(len(model.schedule.agents)):
-        a = model.schedule.agents[i]
-        if a.type == "Gov" and a.region == 0:
+    governments = model.governments
+    for i in range(len(governments)):
+        a = governments[i]
+        if  a.region == 0:
             d0 = a.fiscal_balance
-        elif a.region == 1 and a.type == "Gov":
+        elif a.region == 1:
             d1 = a.fiscal_balance
     return [d0, d1]
 
@@ -511,29 +517,31 @@ def regional_balance(model):
 def regional_capital(model):
     r0 = 0
     r1 = 0
-    for i in range(len(model.schedule.agents)):
-        a = model.schedule.agents[i]
-        if a.type == "Cons":
-            capital_stock = sum(i.amount for i in a.capital_vintage)
-            if a.region == 0:
-                r0 += capital_stock
-            elif a.region == 1:
-                r1 += capital_stock
+    agents = model.firms2 
+    for i in range(len(agents)):
+        a = agents[i]
+        #if a.type == "Cons":
+        capital_stock = sum(i.amount for i in a.capital_vintage)
+        if a.region == 0:
+            r0 += capital_stock
+        elif a.region == 1:
+            r1 += capital_stock
 
     return [r0, r1]
 
 
 #-----------------PRICE------#
-def price_average(model):
+def price_average_cons(model):
     price0 = 0
     price1 = 0
     firms0 = 0.0001
     firms1 = 0.0001
-    for i in range(len(model.schedule.agents)):
-        a = model.schedule.agents[i]
-        if a.type == "Cons":
-            price0 += a.price * a.market_share[0]
-            price1 += a.price * a.market_share[1]
+    agents = model.firms2
+    for i in range(len(agents)):
+        a = agents[i]
+        #if a.type == "Cons":
+        price0 += a.price * a.market_share[0]
+        price1 += a.price * a.market_share[1]
                 #firms1 += a.quantity_mad
     #print("Average cons price con MS, " , [ round(price0, 5) , round(price1, 5)])
     return [ abs(round(price0, 5)) , abs( round(price1, 5))]#/ firms0, price1 / firms1]
@@ -543,13 +551,14 @@ def quantity_ordered(model):
     
     firms0 = 0.0001
     firms1 = 0.0001
-    for i in range(len(model.schedule.agents)):
-        a = model.schedule.agents[i]
-        if a.type == "Cons":
-            if a.region == 0:
-                firms0 += a.quantity_ordered
-            if a.region ==1:
-                firms1 += a.quantity_ordered
+    agents = model.firms2
+    for i in range(len(agents)):
+        a = agents[i]
+        #if a.type == "Cons":
+        if a.region == 0:
+            firms0 += a.quantity_ordered
+        if a.region ==1:
+            firms1 += a.quantity_ordered
             
                 #firms1 += a.quantity_mad
     #print("Average cons price con MS, " , [ round(price0, 5) , round(price1, 5)])
@@ -561,11 +570,12 @@ def price_average_cap(model):
     price1 = 0
     firms0 = 0.0001
     firms1 = 0.0001
-    for i in range(len(model.schedule.agents)):
-        a = model.schedule.agents[i]
-        if a.type == "Cap":
-            price0 += a.price * a.market_share[0]
-            price1 += a.price * a.market_share[1]
+    agents = model.firms1
+    for i in range(len(agents)):
+        a = agents[i]
+        #if a.type == "Cap":
+        price0 += a.price * a.market_share[0]
+        price1 += a.price * a.market_share[1]
                 #firms1 += a.quantity_mad
     #print("Average cons price con MS, " , [ round(price0, 5) , round(price1, 5)])
     return [ abs(round(price0, 5)) , abs( round(price1, 5))]#/ firms0, price1 / firms1]
