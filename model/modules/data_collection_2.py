@@ -5,11 +5,13 @@ Created on Fri Nov 13 15:40:14 2020
 """
 # A file for storing data collection functions
 # model/modules/data_collection.py
-from scipy.stats import beta 
-import numpy as np
-from model.classes.capital_good_firm import CapitalGoodFirm
-from model.classes.consumption_good_firm import ConsumptionGoodFirm
-from model.classes.household import Household
+#from scipy.stats import beta 
+#import numpy as np
+import random
+import math
+#from model.classes.capital_good_firm import CapitalGoodFirm
+#from model.classes.consumption_good_firm import ConsumptionGoodFirm
+#from model.classes.household import Household
 
 def gdp_cap(model):
     GDP0 = 0
@@ -23,6 +25,60 @@ def gdp_cap(model):
         elif firm.region == 1:
             GDP1 += firm.production_made * firm.price
     return[ round(GDP0, 3), round(GDP1, 3), GDP0 + GDP1]
+
+
+def ld_cap(model):
+    LD0 = 0
+    LD1 = 0
+    agents = model.firms1
+    for i in range(len(agents)):
+        firm = agents[i]
+        #if firm.type == "Cap":
+        if firm.region == 0:
+            LD0 += firm.labor_demand
+        elif firm.region == 1:
+            LD1 += firm.labor_demand
+    return[ round(LD0, 3), round(LD1, 3)]
+
+def ld_cons(model):
+    LD0 = 0
+    LD1 = 0
+    agents = model.firms2
+    for i in range(len(agents)):
+        firm = agents[i]
+        #if firm.type == "Cap":
+        if firm.region == 0:
+            LD0 += firm.labor_demand
+        elif firm.region == 1:
+            LD1 += firm.labor_demand
+    return[ round(LD0, 3), round(LD1, 3)]
+
+def ms_exp(model):
+    MSE0 = 0
+    firm0 = 0
+    MSE1 = 0
+    firm1 = 0
+    av_ms_exp_0   = 0
+    av_ms_exp_1 = 0
+    
+    agents = model.firms2
+    for i in range(len(agents)):
+        firm = agents[i]
+        #if firm.type == "Cap":
+        if firm.region == 0:
+            MSE0 += firm.market_share[2]
+            firm0 += 1
+        elif firm.region == 1:
+            MSE1 += firm.market_share[2]
+            firm1 += 1
+    if firm0 != 0:
+        av_ms_exp_0 = MSE0/firm0
+        
+    if firm1 != 0:
+        av_ms_exp_1 = MSE1/firm1
+        
+    return[ round(av_ms_exp_0 , 5), round(av_ms_exp_1, 5)]
+
 
 
 
@@ -82,7 +138,7 @@ def RD_total(model):
 
 
 
-    
+
 
 def gdp(model):
     GDP0 = 0
@@ -100,6 +156,8 @@ def gdp(model):
 def investment(model):
     I0 = 0
     I1 = 0
+    I1_log = 0
+    I0_log = 0
     agents = model.firms2  #model.schedule.agents
     for i in range(len(agents)):
         firm = agents[i]
@@ -108,7 +166,23 @@ def investment(model):
             I0 += firm.investment_cost
         elif firm.region == 1:
             I1 += firm.investment_cost
-    return[ round(I0, 3), round(I1, 3), I0 + I1]
+
+    
+    inv_difference0 = 0
+    inv_difference1 = 0
+    
+    if I0 > 0:
+        I0_log = math.log(I0)
+    if I1 >0:
+        I1_log = math.log(I1)
+            
+    if I1_log > I0_log:
+        inv_difference0 = max( -0.5 , ( I0_log - I1_log) / (I0_log + 0.001))
+    if I0 > I1:
+        inv_difference1 =  max( -0.5 , (I1_log - I0_log) / (I1_log + 0.001))
+ 
+
+    return[ round(I0, 3), round(I1, 3), I0 + I1,inv_difference0, inv_difference1 ]
 
 def inventories(model):
     INV0 = 0
@@ -132,14 +206,11 @@ def inventories(model):
 
 
 def consumption(model):
-    regional_wage = model.datacollector.model_vars['Average_Salary'][int(model.schedule.time)]
-    aggr_employment =model.datacollector.model_vars['Aggregate_Employment'][int(model.schedule.time)]
-    aggr_unemployment =model.datacollector.model_vars["Aggregate_Unemployment"][int(model.schedule.time)] 
-    regional_unemployment_subsidy =model.datacollector.model_vars['Regional_unemployment_subsidy'][int(model.schedule.time)]
-    C0 = regional_wage[0] * aggr_employment[0]  + aggr_unemployment[0] *  regional_unemployment_subsidy[0]
-    C1 = regional_wage[1] * aggr_employment[1]  + aggr_unemployment[1] *  regional_unemployment_subsidy[1]
-    #print("Aggregare CONS  regions 0,1:", [C0, C1])
-    return [round(C0, 3), round(C1, 3), C0+C1]
+    gov = model.governments[0]
+    cons = gov.aggregate_cons
+    
+    return cons #,  old_exp_C * ( 1 + constant_g)]
+
 
 
 def consumption_labor_check(model):
@@ -232,10 +303,20 @@ def regional_average_profits_cap(model):
     return [round(profit0 / firms0, 4), round(profit1 / firms1, 4)]  
 
 
-def regional_profits_cons(model):
+def regional_profits_cons(model,x2 =0.15 ):
+    profits_old = [0,0]
+    prof_difference0 = 0
+    prof_difference1 = 0
+   # agents = model.firms2
+    gov = model.governments[0]
+    profits = gov.net_sales_cons_firms
     profit0 = 0
     profit1 = 0
-    agents = model.firms2
+    if profits[0] > 0:
+        profit0 = math.log(profits[0])  
+    if profits[1] > 0:
+        profit1 = math.log(profits[1])
+    '''
     for i in range(len(agents)):
         a = agents[i]
         #if a.type == "Cons":
@@ -243,8 +324,45 @@ def regional_profits_cons(model):
             profit0 += a.profits #* a.production_made
         elif a.region == 1:
             profit1 += a.profits # * a.production_made
+    '''  
+    if model.schedule.time > 0:
+        time = round(model.schedule.time) - 1
+        #print(time, model.schedule.time)
+        profits_old  = model.datacollector.model_vars['Regional_profits_cons'][time]
+        
+    
+    profit0_old = profits_old[0]
+    profit1_old = profits_old[1]
+    if profit0_old == 0:
+        profit0_old = profits[0]
+        
+    profit1_old = profits_old[1]
+        
+    if profit1_old == 0:
+        profit1_old = profits[1]
+    
+    #profit_list = [profit0, profit1, profit0_old, profit1_old]
+    
+    
+    profitability0  =   max( -0.15 ,  min( 0.15, profit0  - profit0_old))
+    profitability1  =   max( -0.15 , min( 0.15 , profit1 - profit1_old ) )
     #print("Total profits cons are  ", [profit0, profit1])
-    return [round(profit0, 4), round(profit1, 4)]  
+    
+    
+    if profitability0 < profitability1 and profit1 > 0: # and profitability1 > 0:
+        prof_difference0 =  max( -0.5 , (profitability0 - profitability1) / abs(profitability0 + 0.001))
+    
+    if profitability1 < profitability0  and profit0 > 0: # and profitability0 > 0:
+        prof_difference1 = max( -0.5 , ( profitability1 - profitability0) / abs( profitability1 + 0.001))
+    '''
+    if profit0_old == 0:
+        prof_difference0 = 0 
+    if profit1_old == 0:
+        prof_difference1 = 0 
+    '''   
+   
+    return [profit0 , profit1, prof_difference0, prof_difference1, profitability0, profitability1] 
+
 
 
 '''
@@ -298,8 +416,8 @@ def sectoral_aggregate_debt(model):
     return [[debt_cap, sum(debt_cons0)], [debt_cap, sum(debt_cons1)]]
 '''
 def cons_ids_region(model):
-    region0_IDs = [ a.unique_id for a in model.schedule.agents if a.type =="Cons" and a.region == 0 ]
-    region1_IDs = [ a.unique_id for a in model.schedule.agents if a.type == "Cons" and a.region == 1 ]
+    region0_IDs = [ a.unique_id for a in model.firms2 if a.region == 0 ]
+    region1_IDs = [ a.unique_id for a in model.firms2 if a.region == 1 ]
     '''
     last0 = max(region0_IDs)
     last1 = max(region1_IDs)
@@ -328,3 +446,67 @@ def firm_region(model):
                 region1.remove(m)
     '''
     return[[region0_cap, region0_cons],[region1_cap, region1_cons]]
+
+def ms_region(model):
+    ms0 = [ sum(a.market_share) for a in model.firms2 if a.region == 0 ]
+    ms1 = [ sum(a.market_share) for a in model.firms2 if a.region == 1 ]
+    return [ms0, ms1]
+
+def top_wage(model):    
+    
+    top_wage0 = 0
+    top_wage1 = 0
+    
+    wages0 = [ a.wage for a in model.firms2 if a.region == 0  ]
+    wages1 = [ a.wage for a in model.firms2 if a.region == 1  ]
+    
+  
+    if wages0 != []:
+        wages_0_sample = random.sample( wages0, max( 1, len(wages0)// 4))
+        top_wage0 = max(wages_0_sample)
+    if wages1 != []:
+        wages_1_sample = random.sample(wages1, max(1, len(wages1)// 4))
+        top_wage1 = max(wages_1_sample)
+    return [top_wage0, top_wage1]
+    #region1_IDs = [ a.unique_id for a in model.firms2 if a.regi
+
+def top_prod(model):    
+    max_0_0 = 0 
+    max_0_1 = 0
+    max_1_0 = 0
+    max_1_1 = 0
+    prod0_0 = [a.productivity[0] for a in model.firms1 if a.region == 0 ]
+    prod1_0 = [a.productivity[1] for a in model.firms1 if a.region == 0]
+    if prod0_0 != []:
+        max_0_0 = max(prod0_0)
+        max_1_0 = max(prod1_0)
+    
+    prod0_1 = [a.productivity[0] for a in model.firms1 if a.region == 1 ]
+    prod1_1 = [a.productivity[1] for a in model.firms1 if a.region == 1]
+    
+    if prod0_1 != []:
+       max_0_1 = max(prod0_1)
+       max_1_1 = max(prod1_1)
+    
+    return [[max_0_0, max_1_0], [max_0_1, max_1_1], ]
+'''
+
+def top_prod(model):    
+    max_0 = 0 
+    max_1 = 0
+
+    prod0 = [a.productivity[0] for a in model.firms1 ]
+    prod1 = [a.productivity[1] for a in model.firms1 ]
+    max_0 = max(prod0)
+    max_1= max(prod1)
+    
+    return [max_0, max_1]    
+'''    
+def sales_firms(model):
+    gov = model.governments[0]
+    sales = gov.net_sales_cons_firms
+    
+    return[sales]
+
+
+

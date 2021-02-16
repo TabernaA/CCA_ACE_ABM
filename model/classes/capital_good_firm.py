@@ -5,17 +5,19 @@ A MESA Agent class for capital good firms (sector 1)
 
 ''' 
 
-from mesa import Agent, Model
+from mesa import Agent
 
 from model.modules import research_and_development as rd
-from model.modules import goods_market as gm
+#from model.modules import goods_market as gm
 from model.modules import labor_dynamics as ld
 from model.modules import migration as migration
-
-import numpy as np
+#from scipy.stats import bernoulli
 import math
 import random
 import bisect
+
+from scipy.stats import bernoulli
+from scipy.stats import beta
 
 
 class CapitalGoodFirm(Agent):
@@ -24,20 +26,20 @@ class CapitalGoodFirm(Agent):
 
         # general #
         self.type = "Cap"
-        self.previous_productivity = [self.model.initial_productivity,self.model.initial_productivity]
+       # self.previous_productivity = [self.model.initial_productivity, self.model.initial_productivity ]
         self.productivity = [self.model.initial_productivity, self.model.initial_productivity]      #(A,B) pair
         self.cost = 0                  # production cost (recalculated later)
         self.price = 0                 # unit price (recalculated later)
         self.sales = 0                 # previous sales, initially 0
         self.net_worth= self.model.initial_net_worth               # money for spending
         self.lifecycle = 1
-        #self.flooded = False
+        self.flooded = False
         
         # labor market #
         self.open_vacancies = False
         self.employees_IDs = []
         self.wage = self.model.initial_wages
-
+        self.labor_demand = 0
         # capital goods market #
         
         trade_cost = self.model.transport_cost   #temporary
@@ -48,14 +50,22 @@ class CapitalGoodFirm(Agent):
         self.export_orders = []
         #self.demands = [0,0]         
         self.brochure_regional =[self.productivity[0], self.price, self.unique_id]
-        self.brochure_export = [self.productivity[0], self.price * trade_cost, self.unique_id]
+        self.brochure_export = [self.productivity[0], self.price * ( 1 + trade_cost), self.unique_id]
         self.profits = 0 
         self.real_demand_cap = [0,0]         # the first element refers to regional demand, the second to the demand coming from the other region 
         self.production_made = 0 
         self.client_IDs = []
         self.lifecycle = 0
         self.RD_budget = 0
+        self.IM = 0
+        self.IN = 0
         self.productivity_list = []
+        
+        #Migration tracking
+        self.distances_mig = []
+        self.region_history = []
+      #  self.migration_pr =  self.model.pr_migration_f
+        self.pre_shock_prod = 0
         
         # climate change #
         self.CCA_resilience = [1,1] 
@@ -71,13 +81,20 @@ class CapitalGoodFirm(Agent):
             damages = min( self.model.S / self.CCA_resilience[0], self.model.S)
             self.productivity[1] =  self.productivity[1]
         '''
+        if self.flooded == True:
+            shock = self.model.S
+            self.pre_shock_prod = self.productivity[1]
+           # print(self.productivity[1])
+            #damages = min( self.model.S / self.CCA_resilience[0], self.model.S)
+            self.productivity[1] =  self.productivity[1] * ( 1 - shock)
+            #print('Flood I lost the productivity now', self.productivity[1])
         self.cost = self.wage / self.productivity[1]
 
 
     ''' 
     Calculate the unit price
     '''
-    def calculatePrice(self, markup=0.1):
+    def calculatePrice(self, markup=0.04):
         self.price = 1+markup * self.cost
         #print("my cap price is ", self.price)
 
@@ -87,31 +104,106 @@ class CapitalGoodFirm(Agent):
     '''
     def RD(self):
         # step 1: RD budget
-        self.RD_budget, self.IN, self.IM = rd.calculateRDBudget(self.sales, self.net_worth)
+        if self.sales > 0:
+            self.RD_budget, self.IN, self.IM = rd.calculateRDBudget(self.sales, self.net_worth)
         '''
         if self.flooded == True:
             self.RD_budget = 0 
         '''
-        # step 2: innovate
-        #print("old prod", self.productivity)
-        in_productivity = rd.innovate(self.IN, self.productivity)
+        IN = self.IN
+        prod = self.productivity 
+        Z=0.3
+        a=3
+        b=3
+        x_low=-0.15
+        x_up=0.15
+        in_productivity = [0,0]
+
+    # Bernoulli draw to determine success (1) or failure (0)
+        p = 1-math.exp(-Z*IN)
+    #p1 = 1-math.exp(-Z*IN/2)
+    #print( "P ", p , "b", b)
+    
+        if bernoulli.rvs(p) == 1: # new production productivity (B) from innovation
+           a = (1 + x_low + beta.rvs(a,b)*(x_up-x_low)) 
+           in_productivity[1] = prod[0] * a
+
+       # if bernoulli.rvs(p) == 1:
+        # new machine productivity (A) from innovation
+          # a_1 =   a * ( 1 +   random.uniform(0, 0.1) - 0.05)
+           a_1 = (1 + x_low + beta.rvs(a,b)*(x_up-x_low)) 
+           in_productivity[0] = prod[1] * a_1
+        #print(a)
+        
+
+
+
         #print("new prod", in_productivity)
         # step 3: imitate
         #competitors = [ a.unique_id for a in self.model.schedule.agents if ( a.type == "Cap" and a.lifecycle > 1 )]
-        im_productivity = rd.imitate(self.IM,
-                                     self.model.ids_firms1,
-                                     self.model.firms1,
-                                     self.productivity,
-                                     self.region)
-        #print("In ", self.IN, "IM ", self.IM)
+    
+        IM = self.IM
+        firm_ids = self.model.ids_firms1
+        agents = self.model.firms1
+        reg = self.region
+       # Z=0.3
+        e=2
+        im_productivity = [0,0]
+       # print(Z, IM, IN)
+    # Bernoulli draw to determine success (1) or failure (0)
+        p = 1-math.exp(-Z*IM)
+        if bernoulli.rvs(p) == 1:
+        # store imitation probabilities and the corresponding firms
+            imiProb = []
+            imiProbID = []
+
+        #for all capital-good firms, compute inverse Euclidean distances
+            for id in firm_ids:
+               firm = agents[id]
+               distance = math.sqrt(pow(prod[0] - firm.productivity[0], 2) + \
+                           pow(prod[0] - firm.productivity[0], 2))
+               if distance == 0:
+                   imiProb.append(0)
+               else:
+                # increase distance if the firm is in another region
+                    if firm.region != reg:
+                        imiProb.append(1/e*distance)
+                    else:
+                        imiProb.append(1/distance)
+               imiProbID.append(firm.unique_id)
+
+        # cumulative probability
+            _sum = sum(imiProb)
+
+            if (_sum > 0):
+               acc = 0
+               for i in range(len(imiProb)):
+                   acc += imiProb[i] / _sum
+                   imiProb[i] = acc
+
+            # randomly pick a firm to imitate (index j)
+               rnd = random.uniform(0,1)
+               j = bisect.bisect_right(imiProb, rnd)
+
+            # copy that firm's technology
+               if j < len(imiProb):
+                   firm = agents[imiProbID[j]]
+                   im_productivity[0] = firm.productivity[0]
+                   im_productivity[1] = firm.productivity[1]
         # step 4: choose best technology to adopt
+        if self.pre_shock_prod != 0:                           ## Recovering lab productivity after disaster 
+            self.productivity[1] = self.pre_shock_prod
+            self.pre_shock_prod = 0 
+
+            #print('restored now', self.productivity[1])
         self.previous_productivity = self.productivity
+       # print(' previous prod', self.previous_productivity)
+      #  if self.flooded == True:
+            # print(' previous prod', self.previous_productivity)
         self.productivity_list.append([ self.productivity[0], in_productivity[0], im_productivity[0]])
-        self.productivity[0] = round(max(self.productivity[0], in_productivity[0], im_productivity[0]), 3)
-        self.productivity[1] = round(max(self.productivity[1], in_productivity[0], im_productivity[1]) , 3)
+        self.productivity[0] = round(max(self.productivity[0], in_productivity[0], im_productivity[0], 1), 3)
+        self.productivity[1] = round(max(self.productivity[1], in_productivity[1], im_productivity[1], 1), 3)
         
-        #self.model.schedule.time == (self.model.shock_time + 2):                             ## Recovering lab productivity after disaster 
-         #   self.productivity[1] = max( self.productivity[0], self.model.productivity[1])
 
 
     '''
@@ -160,35 +252,42 @@ class CapitalGoodFirm(Agent):
             
 
 
-    '''
-    NOT USED AT THE MOMENT, different procedure for wage calculation 
+    
+   # NOT USED AT THE MOMENT, different procedure for wage calculation 
  
     def wage_determination(self):
         if (self.model.schedule.time < 2):
             return #random.randint(5,15)        #initial value
         else:
+
             r = self.region
-            current_unemployment_rate_my_region = self.model.datacollector.model_vars['Unemployment_Regional'][int(self.model.schedule.time)][r]
-            previous_unemployment_rate_my_region = self.model.datacollector.model_vars['Unemployment_Regional'][int(self.model.schedule.time) - 1 ][r]
-            current_average_productivty_my_region = self.model.datacollector.model_vars['Capital_firms_av_prod'][int(self.model.schedule.time)][r]
-            previous_average_productivty_my_region = self.model.datacollector.model_vars['Capital_firms_av_prod'][int(self.model.schedule.time) - 1 ][r]
-
-         
-
-            if previous_average_productivty_my_region < 1 :
-                delta_productivity_average = 2
-            else:
-                delta_productivity_average = (current_average_productivty_my_region - previous_average_productivty_my_region) / previous_average_productivty_my_region
-                    
+            gov = self.model.governments[0]
+            minimum_wage = gov.minimum_wage_region[r] 
+           
+           # minimum_wage = self.model.datacollector.model_vars["Minimum_wage"][int(self.model.schedule.time) ][r]
+           
+            top_wage = self.model.datacollector.model_vars['Top_wage'][int(self.model.schedule.time)][r]
+            self.wage = max( minimum_wage, top_wage)
+            '''
+           
+            #current_unemployment_rate_my_region = self.model.datacollector.model_vars['Unemployment_Regional'][int(self.model.schedule.time)][r]
+            #previous_unemployment_rate_my_region = self.model.datacollector.model_vars['Unemployment_Regional'][int(self.model.schedule.time) - 1 ][r]
+            #current_average_productivty_my_region = self.model.datacollector.model_vars['Capital_firms_av_prod'][int(self.model.schedule.time)][r]
+            #previous_average_productivty_my_region = self.model.datacollector.model_vars['Capital_firms_av_prod'][int(self.model.schedule.time) - 1 ][r]
+            
+            #delta_unemployment = (current_unemployment_rate_my_region - previous_unemployment_rate_my_region) / previous_unemployment_rate_my_region
             current_productivty  = self.productivity[1]
-            delta_unemployment = (current_unemployment_rate_my_region - previous_unemployment_rate_my_region) / previous_unemployment_rate_my_region
             delta_my_productivity = (current_productivty - self.previous_productivity[1]) / self.previous_productivity[1]
             #print("I am cap firm ",self.unique_id, "my wage was ", self.wage, "")
-            #print( "my region is ", self.region ," delta unemployment  ", delta_unemployment, " deltaregiona productivity ", delta_productivity_average)
-            self.wage = self.wage * (1 + 0.50 * delta_my_productivity + 0.50 * delta_productivity_average + 0 *delta_unemployment )
-            
+            delta_productivity_average = gov.regional_av_prod[r + 2]
+            minimum_wage = gov.minimum_wage_region[r] 
+ 
+        
 
-    '''
+            #print( "my region is ", self.region ," delta unemployment  ", delta_unemployment, " deltaregiona productivity ", delta_productivity_average)
+            self.wage = max(minimum_wage , round(self.wage * (1 + 0.25  * delta_my_productivity + 0.75 * delta_productivity_average), 3))
+            '''
+
 
 
     '''
@@ -217,7 +316,7 @@ class CapitalGoodFirm(Agent):
         
         ##---pick some new random client from both regions (more likely from the same region ) --##
         if len(self.client_IDs) > 0:
-            new_clients = min(1, len(self.client_IDs)//4)
+            new_clients = min(1, len(self.client_IDs)//5)
             for i in range(new_clients):
                 if random.uniform(0,1) < 0.7 and len(client_regional_IDs) > 0:
                     new_regional_client = random.sample(client_regional_IDs, 1)
@@ -309,13 +408,13 @@ class CapitalGoodFirm(Agent):
         #self.regional_orders = []
         #self.export_orders = []
 
-        self.labor_demand = sum(self.real_demand_cap) / self.productivity[1]  #+ self.RD_budget / self.wage 
+        self.labor_demand = sum(self.real_demand_cap) / self.productivity[1] # + self.RD_budget / self.wage 
         self.desired_employees, self.employees_IDs, self.open_vacancies = ld.hire_and_fire(self.labor_demand, 
-                                                                                        self.employees_IDs, 
+                                                                                           self.employees_IDs, 
                                                                                            self.open_vacancies, 
                                                                                            self.model,
                                                                                            self.unique_id)
-        #print("I am cap firm ", self.unique_id, "I want", self.desired_employees, "I have ", len(self.employees_IDs), "because my real demand was" , self.real_demand_cap)
+        #print("I am cap firm ", self.unique_id, "I want", self.desired_employees, "I have ", len(self.employees_IDs), "because my real demand was" , sum(self.real_demand_cap))
 
     '''
     Firms check wheter they were able to satisy all their orders of they have to cancell some
@@ -326,7 +425,10 @@ class CapitalGoodFirm(Agent):
        # if self.flooded == True:
         #    self.productivity[1] = (1 - self.model.S) * self.productivity[1]
         
-        self.production_made = max( 0 , round(  (len(self.employees_IDs) -  self.RD_budget  /self.wage )* self.productivity[1] , 2))
+        self.production_made = max( 0 , round(  len(self.employees_IDs)  * self.productivity[1] , 2))   #   self.RD_budget  /self.wage )   
+        if self.flooded == True:
+            shock = self.model.S
+            self.production_made = ( 1 - shock) * self.production_made
         #if self.model.schedule.time == (self.model.shock_time):  
          #   damages = min( self.model.S / self.CCA_resilience[1], self.model.S)
           #  self.production_made = (1 - damages) * self.production_made
@@ -338,17 +440,23 @@ class CapitalGoodFirm(Agent):
             amount_to_cancel = total_orders - self.orders_filled
             orders.reverse()
             #print("total orders timeline", total_orders)
-            orders_canceled = []
+            #orders_canceled = []
             #print(total_orders)
-            for i in range(len(orders)):
-                if sum(j[0] for j in orders_canceled) < amount_to_cancel:
-                    orders_canceled.append(orders[0])
+            while amount_to_cancel > 0 and len(orders) > 0:
+                ##-- ensure that the correct amount gets canceled from each order --##
+                c = min(orders[0][0], amount_to_cancel)
+                orders[0][0] -= c #this is rounded to 2 decimals because so is self.production_made
+                buyer = self.model.schedule.agents[orders[0][1]]
+
+                ##-- order is canceled --##
+                if orders[0][0] <= 0:
+                    buyer.order_canceled = True
                     del orders[0]
-            #print(orders_canceled)
-            for order in range(len(orders_canceled)):
-    
-                buyer = self.model.schedule.agents[orders_canceled[order][1]]
-                buyer.order_canceled = True
+                ##-- order is partially canceled --##
+                else:
+                    buyer.order_reduced = c
+                amount_to_cancel -= c
+
 
                 #print(buyer)
                      
@@ -383,9 +491,10 @@ class CapitalGoodFirm(Agent):
                 
 
     def climate_damages(self):
-        self.flooded == False
-        if self.region == 0 and self.model.schedule.time == self.model.shock_time:
-            self.flooded == True
+        self.flooded = False
+        if self.region == 0 and int(self.model.schedule.time) == self.model.shock_time:
+            #print('flood cap')
+            self.flooded = True
             #climate_shock = self.model.datacollector.model_vars['Climate_shock'][int(self.model.schedule.time)] +(self.model.s /10)
            # print("I am firm ", self.unique_id, "my capital vintage pre shock is ", self.capital_vintage)
 
@@ -398,91 +507,45 @@ class CapitalGoodFirm(Agent):
     '''
     def migrate(self):
         ##-- stochastic entry barrier to migration process --##
-         if random.uniform(0,1) < 0.05 or self.lifecycle < 3:
+      #  if bernoulli.rvs(self.migration_pr) == 1 and self.lifecycle > 4:
         #if self.unique_id % 10 != 0:
-            '''
-            r = self.region
+           
+           # unemployment_subsidy = self.model.datacollector.model_vars["Regional_unemployment_subsidy"][int(self.model.schedule.time)]
+            demand_distance = 0 
+            demand = self.real_demand_cap
+            if demand[1] >= demand[0]:
+               demand_distance = ( demand[0] - demand[1]) / (demand[0] + 0.001)
             
-            if self.regional_orders != []:
-                demand_int = 0
-                for i in range(len(self.regional_orders)):
-                    demand_int += self.regional_orders[i][0]
-            else: 
-                demand_int = 0
-            if self.export_orders != []:
-                demand_exp = 0
-                for i in range(len(self.export_orders)):
-                    demand_exp += self.export_orders[i][0]
-            else: 
-                demand_exp = 0
-         
-            if self.lifecycle == 0:
-                demand_distance =  self.model.datacollector.model_vars["Regional_profits_cap"][int(self.model.schedule.time)]
-                demand_distance = (demand_distance[r] - demand_distance[1 - r] )/ demand_distance[r]
-            else:
-                demand_distance = (demand_int - demand_exp) / (demand_int + 0.00001)
-            '''
-            unemployment_subsidy = self.model.datacollector.model_vars["Regional_unemployment_subsidy"][int(self.model.schedule.time)]
-            mp = migration.cap_firms_migration_probability(self.real_demand_cap, self.region, self.wage, self.profits, self.model, unemployment_subsidy)
-        
-            self.region, self.employees_IDs, self.net_worth = migration.firm_migrate(mp, self.model, self.region, self.unique_id, self.employees_IDs, self.net_worth, self.wage)
+               mp = migration.firms_migration_probability( demand_distance, self.region, self.wage,  self.model)
+               if mp> 0:
+                   self.region, self.employees_IDs, self.net_worth, self.wage = migration.firm_migrate(mp, self.model, self.region, self.unique_id, self.employees_IDs, self.net_worth, self.wage, 0)
 
 
-
-    '''
-    Firm exit and entry
-    
-    def entry_exit(self):
-        # if my market share everywhere is zero
-        if self.market_share[0] + self.market_share[1] == 0:
-            print("Firm", self.unique_id,"exiting...")
-
-            # remove myself
-            if self.region == 0:
-                self.model.ids_region0.remove(self.unique_id)
-            elif self.region == 1:
-                self.model.ids_region1.remove(self.unique_id)
-            self.model.ids_firms1.remove(self.unique_id)
-            self.model.grid.remove_agent(self)
-            self.model.schedule.remove(self)
-
-            # replace myself with a new firm, it takes over my unique_id
-            i = self.unique_id
-            a = CapitalGoodFirm(i, self.model)
-            self.model.schedule.add(a)
-            self.model.ids_firms1.append(i)
-
-            # place the new firm in the grid
-            y = self.random.randrange(2)
-            self.model.grid.place_agent(a, (0,y))
-            a.region = y
-            if y == 0:
-                self.model.ids_region0.append(i)
-            elif y == 1:
-                self.model.ids_region1.append(i)
-
-            print("Capital good firm", self.unique_id, "left the market")
-                        
-            return True
-        return False
-    '''
     
 
     def stage0(self):
+        #print('cap')
        # if self.region == 0:
         #    self.CCA_RD()
-        if self.lifecycle > 0:
+        if self.lifecycle > 20:
+         #   if self.model.schedule.time > 80:
+                self.migrate()
             #print(self.region, self.productivity)
-            if self.sales > 0:
-                self.RD()
-            self.calculateProductionCost()
-            self.calculatePrice()
-            self.advertise()
+            #if self.sales > 0:
+           
+        if self.model.S > 0:
+            self.climate_damages()
+          
+        self.RD()
+        self.calculateProductionCost()
+        self.calculatePrice()
+        self.advertise()
 
     def stage1(self):
-            self.wage_calculation()
-        #self.wage_determination()
-            self.hire_and_fire_cap()
+        #print('cap')
+            #self.wage_calculation()
+        self.wage_determination()
+        self.hire_and_fire_cap()
 
     # wait for households to do labor search
     def stage2(self):
@@ -494,8 +557,8 @@ class CapitalGoodFirm(Agent):
         #self.market_share_normalized()
 
     def stage4(self):
-        if self.model.schedule.time >2:
-            self.market_share_normalized()
+      #  if self.model.schedule.time >2:
+            #self.market_share_normalized()
         pass
         #self.climate_damages()
         #pass
@@ -503,17 +566,13 @@ class CapitalGoodFirm(Agent):
         pass
 
     def stage6(self):
+        self.market_share_normalized()
         
         #if self.model.schedule.time > self.model.start_migration:
-         #   self.migrate()
+         #  self.migrate()
             
-        '''           
-        if self.model.S > 0:
-            self.climate_damages()
-            if (self.model.schedule.time >= self.model.shock_time and self.model.schedule.time < (self.model.shock_time + 10)) :
-                if random.uniform(0,1) < 0.05:
-                    self.migrate()
-        '''
+
+
         #if self.lifecycle > 0:
             
         self.lifecycle += 1

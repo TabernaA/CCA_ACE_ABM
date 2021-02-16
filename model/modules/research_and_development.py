@@ -26,7 +26,7 @@ DEFAULT PARAMETERS
 v : fraction of previous sales, 0.05 default
 e : dividing between IN and IM, 0.5 default
 '''
-def calculateRDBudget(S, N, v=0.05, e=0.5):
+def calculateRDBudget(S, N, v=0.04, e=0.5):
     if S > 0:
         rd_budget = v*S
     elif N < 0:
@@ -67,8 +67,9 @@ def innovate(IN, prod, Z=0.3, a=3, b=3, x_low=-0.15, x_up=0.15):
         #print(a)
         
 
-   # if bernoulli.rvs(p1) == 1: # new production productivity (B) from innovation
-        in_productivity[1] = prod[1] * (1 + x_low + beta.rvs(a,b)*(x_up-x_low))
+    #if bernoulli.rvs(p1) == 1: # new production productivity (B) from innovation
+       # a1 = (1 + x_low + beta.rvs(a,b)*(x_up-x_low)) 
+        in_productivity[1] = prod[1] * a
 
     return in_productivity
 
@@ -153,7 +154,7 @@ def calculateRDBudgetCCA(S, N, v=0.005, e=0.5):
 '''
 R : CCA resilience coefficient
 '''
-def innovate_CCA(IN, R, Z=0.3, a=3, b=3, x_low=-0.15, x_up=0.15):
+def innovate_CCA(IN, R, Z=0.3, a=3, b=3, x_low=-0.10, x_up=0.10):
     in_R = [0, 0]
 
     # Bernoulli draw to determine success (1) or failure (0)

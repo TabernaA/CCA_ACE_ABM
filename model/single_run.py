@@ -2,133 +2,139 @@
 # bringing all elements of the model together
 # contains run method
 
-from model.classes.capital_good_firm import CapitalGoodFirm
-from model.classes.consumption_good_firm import ConsumptionGoodFirm
-from model.classes.household import Household
+#from model.classes.capital_good_firm import CapitalGoodFirm
+#from model.classes.consumption_good_firm import ConsumptionGoodFirm
+#from model.classes.household import Household
 from model.classes.model import KSModel
-from model.modules.data_collection import *
-from model.modules.data_collection_2 import *
+#from model.modules.data_collection import *
+#from model.modules.data_collection_2 import *
 import matplotlib.pyplot as plt
-import model.modules.data_analysis as da
-import scipy.stats as st        
+#import model.modules.data_analysis as da
+import model.modules.additional_functions as af
+#import scipy.stats as st        
 import seaborn as sns
-import math
-from numpy import *
+import random
+import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 
 
+steps =  250
 
-steps = 250
 
-
-model = KSModel(F1 = 40, F2 = 200, H = 10000, B= 1, S = 0, T= 0.01)
+model = KSModel(F1 = 50, F2 =250, H = 3500, B= 1,  T= 0.03, S = 0.5)
+model.reset_randomizer(1)
 for i in range(steps):
     print("#------------ step", i+1, "------------#")
     model.step()
 macro_variable = model.datacollector.get_model_vars_dataframe()
+micro_variable = model.datacollector.get_agent_vars_dataframe()
+
+micro_variable = micro_variable.dropna()
+
+
+macro_variable.info()
+
+
+#macro_variable[['LD cons 0', 'LD cons 1']] = pd.DataFrame(macro_variable.LD_cons.to_list(), index= macro_variable.index)
+macro_variable[['Cons region 0','Cons region 1']] = pd.DataFrame(macro_variable.Population_Regional_Cons_Firms.to_list(), index= macro_variable.index)
+macro_variable[['Cap region 0','Cap region 1']] = pd.DataFrame(macro_variable.Population_Regional_Cap_Firms.to_list(), index= macro_variable.index)
+macro_variable[['Households region 0','Households region 1']] = pd.DataFrame(macro_variable.Population_Regional_Households.to_list(), index= macro_variable.index)
+macro_variable[['Cons price region 0','Cons price region 1']] = pd.DataFrame(macro_variable.Cosumption_price_average.to_list(), index= macro_variable.index)
+#macro_variable[['CCA coeff 0','CCA coeff 1']] = pd.DataFrame(macro_variable.Average_CCA_coeff.to_list(), index= macro_variable.index)
+#macro_variable[['Prod cons region 0','Prod cons region 1', 'Delta prod cons region 0', 'Delta prod cons region 1']] = pd.DataFrame(macro_variable.Consumption_firms_av_prod.to_list(), index= macro_variable.index)
+macro_variable[['Prod region 0','Prod region 1', 'Delta prod region 0', 'Delta prod region 1' ]] = pd.DataFrame(macro_variable.Regional_average_productivity.to_list(), index= macro_variable.index)    
+macro_variable[['GDP region 0','GDP region 1', 'GDP total']] = pd.DataFrame(macro_variable.GDP.to_list(), index= macro_variable.index)
+macro_variable[['Unemployment region 0','Unemployment region 1', 'Unemployment diff 0','Unemployment diff 1' ]] = pd.DataFrame(macro_variable.Unemployment_Regional.to_list(), index= macro_variable.index)
+#macro_variable[['MS track 0', 'MS track 1']] = pd.DataFrame(macro_variable.MS_track.to_list(), index= macro_variable.index)
+macro_variable[['CONS 0', 'CONS 1', 'CONS Total', 'CONS difference 0', 'CONS difference 1', 'Export']] = pd.DataFrame(macro_variable.CONSUMPTION.to_list(), index= macro_variable.index)
+macro_variable[['INV 0', 'INV 1', 'INV Total', 'INV difference 0', 'INV difference 1']] = pd.DataFrame(macro_variable.INVESTMENT.to_list(), index= macro_variable.index)
+macro_variable[['GDP cons region 0','GDP cons region 1', 'GDP cons total']] = pd.DataFrame(macro_variable.GDP_cons.to_list(), index= macro_variable.index)
+macro_variable_csv_data = macro_variable.to_csv('data_model_.csv', index  = True)
+macro_variable[['Aggr unemployment region 0','Aggr unemployment region 1']] = pd.DataFrame(macro_variable.Aggregate_Unemployment.to_list(), index= macro_variable.index)
+macro_variable['Aggr unemployment'] = macro_variable['Aggr unemployment region 0'] + macro_variable['Aggr unemployment region 1']
+macro_variable[['Aggr employment region 0','Aggr employment region 1']] = pd.DataFrame(macro_variable.Aggregate_Employment.to_list(), index= macro_variable.index)
+macro_variable['Aggr employment'] = macro_variable['Aggr employment region 0'] + macro_variable['Aggr employment region 1']
+macro_variable['Unemployment rate'] = macro_variable['Aggr unemployment'] / (macro_variable['Aggr unemployment'] + macro_variable['Aggr employment'])
+macro_variable['Labor demand 0'] =  macro_variable['GDP region 0'] / macro_variable['Prod region 0']  /  macro_variable['Cons price region 0'] 
+macro_variable['Labor demand 0'] =  macro_variable['GDP region 0'] / macro_variable['Prod region 0']  /  macro_variable['Cons price region 0'] 
+macro_variable[['Wages region 0','Wages region 1','Wage diff 0', 'Wage diff 1']] = pd.DataFrame(macro_variable.Average_Salary.to_list(), index= macro_variable.index)
+
+#cycles = sm.tsa.filters.bkfilter(macro_variable[['INV Total','CONS Total', 'GDP total']], 6, 32, 12)
+#macro_variable['Households region 0 rate'] = macro_variable['Households region 0'] / (macro_variable['Households region 0'] + macro_variable['Households region 1'])
+#macro_variable['Households region 1 rate'] = macro_variable['Households region 1'] / (macro_variable['Households region 0'] + macro_variable['Households region 1'])
+#macro_variable['INV region 1 rate'] = macro_variable['INV 1'] / (macro_variable['INV 0'] + macro_variable['INV 1'])
+#macro_variable['INV region 0 rate'] = macro_variable['INV 0'] / (macro_variable['INV 0'] + macro_variable['INV 1'])
+#macro_variable['GDP region 0 rate'] = macro_variable['GDP region 0'] / (macro_variable['GDP region 0'] + macro_variable['GDP region 1'])
+#fig, ax = plt.subplots()
+#cycles.plot(ax=ax, style=['r--', 'b-'])
+#plt.show()
+
+transition = 60
+
+#mv = micro_variable.loc[(micro_variable['Price'] > 5) & (micro_variable.index.get_level_values('Step') > 275)] 
+
+
+##------log variable -----#
+'''
+INV
+'''
+inv_gr = af.variable_growth_rate(macro_variable, 'INV Total', transition, steps)
+inv_gr_0 = af.variable_growth_rate(macro_variable, 'INV 0', transition, steps)
+inv_gr_1 = af.variable_growth_rate(macro_variable, 'INV 1', transition, steps)
+std_inv = af.mean_variable_log(macro_variable, 'INV Total', 50, 50).std()
 
 
 
 '''
-Here below is just some plots for the results work in progress
-''' 
+GDP 
+'''
+
+
+gdp_gr = af.variable_growth_rate( macro_variable, 'GDP total', transition, steps)
+gdp_gr_0 = af.variable_growth_rate(macro_variable, 'GDP region 0', transition, steps)
+gdo_gr_1 =af.variable_growth_rate(macro_variable, 'GDP region 1', transition, steps)
+
+std_gdp = af.mean_variable_log(macro_variable, 'GDP total', transition, 50).std()
+rel_std_inv = std_inv / std_gdp
+
+mean_gdp_0 = af.mean_variable_log(macro_variable, 'GDP region 0')
+mean_gdp_1 = af.mean_variable_log(macro_variable, 'GDP region 1')
+
+gdp_plot = [[mean_gdp_0, 'Region 0', 'black'], [mean_gdp_1, 'Region 1', 'red']]
+af.plot(gdp_plot, 0, 350)
+
 
 '''
-Plotting micro variables that are stored as [region0, region1] lists
+CONS
 '''
-def plot_list_2var_reg(variable1,variable2, steps, title="Graph"):
-    data0 = []
-    data1 = []
-    data2 = []
-    data3 = []
-    for i in steps:
-        data0.append(variable1[i][0])
-        data1.append(variable1[i][1])
-        data2.append(variable2[i][0])
-        data3.append(variable2[i][1])
-    fig, (ax0, ax1) = plt.subplots(2,1)
-    fig.suptitle(title)
-    ax0.plot(data0)
-    ax0.plot(data2)
-    
-    
-    ax0.set_ylabel("Region 0")
-    ax1.plot(data1)
-    ax1.plot(data3)
-    ax1.set_ylabel("Region 1")
-    ax1.set_xlabel('steps')
-    plt.show() #optional
+cons_gr = af.variable_growth_rate(macro_variable, 'CONS Total', transition, steps)
+cons_gr_0 = af.variable_growth_rate(macro_variable, 'CONS 0', transition, steps)
+cons_gr_1 = af.variable_growth_rate(macro_variable, 'CONS 1', transition, steps)
+std_cons = af.mean_variable_log(macro_variable, 'CONS Total', transition, 50).std()
+rel_std_cons = std_cons / std_gdp
+
+'''
+UNEMPLOYMENT RATE
+'''
+
+unemployment_rate_0 = af.mean_variable(macro_variable,'Unemployment region 0', 100).mean()
+unemployment_rate_1 = af.mean_variable(macro_variable,'Unemployment region 1', 100).mean()
+unemployment_rate = af.mean_variable(macro_variable,'Unemployment rate', 100).mean()
+
+af.mean_variable(macro_variable,'Unemployment region 0', 100).plot()
+af.mean_variable(macro_variable,'Unemployment region 1', 100).plot()
+af.mean_variable(macro_variable,'Unemployment rate', 100).plot()
 
 
-def plot_list_2var_comp(variable1,variable2, steps, title="Graph"):
-    data0 = []
-    data1 = []
-    data2 = []
-    data3 = []
-    for i in steps:
-        data0.append(variable1[i][0])
-        data1.append(variable1[i][1])
-        data2.append(variable2[i][0])
-        data3.append(variable2[i][1])
-    fig, (ax0, ax1) = plt.subplots(2,1)
-    fig.suptitle(title)
-    ax0.plot(data0)
-    ax0.plot(data1)
-    
-    ax0.set_ylabel("Region 0")
-    ax1.plot(data2)
-    ax1.plot(data3)
-    ax1.set_ylabel("Region 1")
-    ax1.set_xlabel('steps')
-    plt.show() #optional
-    
-    
-def plot_list_2var_comp_first_difference(variable1,variable2, steps,step_start, title="Graph"):
-    data0 = []
-    data1 = []
-    data2 = []
-    data3 = []
-    for i in range(step_start ,steps):
-        data0.append(variable1[i][0])
-        data1.append(variable1[i][1])
-        data2.append(variable2[i][0]) # - variable2[i -1][0])
-        data3.append(variable2[i][1]) #- variable2[i -1][1])
-    fig, (ax0, ax1) = plt.subplots(2,1)
-    fig.suptitle(title)
-    x = np.arange(step_start, steps, 1)
-    ax0.plot(x, data0, label = "Region 0")
-    ax0.plot(x, data1, label = "Region 1")
-    ax0.set_yscale("log")
-    ax0.set_ylabel("GDP (log)")
-    #ax0.axes.yaxis.set_visible(False)
-    
 
-    ax1.plot(x, data2)
-    ax1.plot(x, data3)
-    ax1.set_ylabel("Average productivity (log)")
-    ax1.set_yscale("log")
-    ax1.set_xlabel('steps')
-    ax0.legend( loc='best')
-    plt.legend(fontsize=8)
-    plt.show() #optional
-    
-    
-    
 
- 
-data0 = [[],[]]
-data1 = [[],[]]
-for i in range(steps):
-   data0[0].append(macro_variable.Consumption_firms_av_prod[i][0])
-   data0[1].append('Region0')
-   data1[0].append(macro_variable.Consumption_firms_av_prod[i][1])
-   data1[1].append('Region1')
+af.plot_check(macro_variable.INVESTMENT, macro_variable.GDP_cap, range(steps), "Checking cap ")
+af.plot_check(macro_variable.CONSUMPTION, macro_variable.GDP_cons, range(steps), "Checking cons")
 
 #for i in range (step):
-prod = data0[0] + data1[0]
-region =  data0[1] + data1[1]
 
-
+'''
 macro_variable[['Cons region 0','Cons region 1']] = pd.DataFrame(macro_variable.Population_Regional_Cons_Firms.to_list(), index= macro_variable.index)
 macro_variable[['CCA coeff 0','CCA coeff 1']] = pd.DataFrame(macro_variable.Average_CCA_coeff.to_list(), index= macro_variable.index)
 macro_variable[['Prod cons region 0','Prod cons region 1']] = pd.DataFrame(macro_variable.Consumption_firms_av_prod.to_list(), index= macro_variable.index)  
@@ -153,60 +159,174 @@ plot_list_3var_comp_first_difference(macro_variable.Population_Regional_Cons_Fir
 
 plot_list_2var_comp_first_difference(macro_variable.RD_CCA_INVESTMENT,macro_variable.Average_CCA_coeff,250 , 50, "Turning the tide of agglomeration")
 
-macro_variable.Average_CCA_coeff.plot()
+#macro_variable.Average_CCA_coeff.plot()
 
 
 plot_list_2var_comp_first_difference(macro_variable.INVESTMENT,macro_variable.Average_Salary,200 , 50, "Turning the tide of agglomeration")
+'''
+#macro_variable = macro_variables[2]
 
-plot_list_2var_comp_first_difference(macro_variable.GDP,macro_variable.Consumption_firms_av_prod ,200 , 50, "Turning the tide of agglomeration")
-plot_list(macro_variable.INVESTMENT, range(steps), "Investment")
-plot_list(macro_variable.Competitiveness_Regional, range( 5,steps), "Competitiveness")
-plot_list(macro_variable.Aggregate_Employment, range(steps), "Aggregate Employment")
+transition = 0
+#plot_list_2var_comp_first_difference(macro_variable.GDP,macro_variable.Consumption_firms_av_prod ,200 , 50, "Turning the tide of agglomeration")
+af.plot_list_log(macro_variable.INVESTMENT, range(transition, steps), "Investment")
+af.plot_list_log(macro_variable.CONSUMPTION, range(transition, steps), "Consumption")
+af.plot_list(macro_variable.Competitiveness_Regional, range(transition,  steps), "Competitiveness")
+#plot_list(macro_variable.Aggregate_Employment, range(transition, steps), "Aggregate Employment")
 #plot_list(macro_variable.Population_Regional, range(steps), "Population")
-plot_list(macro_variable.Average_Salary, range(steps) , "Average Salary")
-plot_list(macro_variable.Population_Regional_Households, range(steps), "Number of households")
-plot_list(macro_variable.Cosumption_price_average,  range( 20, steps) , "Consumption price average")
-plot_list(macro_variable.Population_Regional_Cons_Firms, range(steps), "Number of consumption firms")
-plot_list_log(macro_variable.Capital_firms_av_prod, range(steps), " Average productivity Cap firms")
-plot_list(macro_variable.Population_Regional_Cap_Firms, range(steps), "Number of capital  firms")
-plot_list_log(macro_variable.Consumption_firms_av_prod, range(steps), " Average productivity Cons firms")
-plot_list(macro_variable.Unemployment_Regional, range(steps), "Unemployment rate") 
+af.plot_list_log(macro_variable.Average_Salary, range(transition, steps) , "Average Salary")
+af.plot_list(macro_variable.Population_Regional_Households, range(transition,steps), "Number of households")
+af.plot_list_log(macro_variable.Cosumption_price_average,  range(transition,  steps) , "Consumption price average")
+af.plot_list(macro_variable.Population_Regional_Cons_Firms, range(transition, steps), "Number of consumption firms")
+#af.plot_list_log(macro_variable.Capital_firms_av_prod, range(transition, steps), " Average productivity Cap firms")
+af.plot_list(macro_variable.Population_Regional_Cap_Firms, range(transition,  steps), "Number of capital  firms")
+#af.plot_list_log(macro_variable.Consumption_firms_av_prod, range(transition, steps ), " Average productivity Cons firms")
+af.plot_list(macro_variable.Unemployment_Regional, range( transition, steps), "Unemployment rate") 
+af.plot_list_log(macro_variable.GDP, range( steps), "GDP") 
+
+af.plot_list_2var_reg(macro_variable.GDP_cap, macro_variable.INVESTMENT, range(steps), "Check account identity cap ")
+af.plot_list_2var_reg(macro_variable.GDP_cons, macro_variable.CONSUMPTION, range(steps), "Check account IDENTITY CONS  ")
+#af.plot_list_2var_reg(macro_variable.Capital_firms_av_prod, macro_variable.Consumption_firms_av_prod, range(steps), "Productivity ")
+
+af.plot_list_2var_reg(macro_variable.Average_Salary_Capital, macro_variable.Average_Salary_Cons, range(steps), "Wages")
 #(macro_variable.Regional_fiscal_balance, range(steps), "Regional fiscal balance")  
-def plot_list(variable, steps, title="Graph"):
-    data0 = []
-    data1 = []
-    for i in steps:
-        data0.append(variable[i][0])
-        data1.append(variable[i][1])
-    fig, (ax0, ax1) = plt.subplots(2, 1)
-    fig.suptitle(title)
+af.plot_list_2var_reg(macro_variable.Average_Salary_Cons, macro_variable.Consumption_firms_av_prod, range(steps), "Wages")
 
-    ax0.plot(data0)
-    ax0.set_ylabel("Region 0")
+comp_1 = []
+comp_2 = []
+comp_3 = []
+for i in range(len(model.firms2)):
+    comp_2.append(model.firms2[i].market_share[2])
 
-    ax1.plot(data1)
-    ax1.set_ylabel("Region 1")
+migr_par = []
+mp = []
+region = []
+demand_distance = []
+wage_distance = []
+delta_pr = []
+cons_firms = model.firms2
+households = model.households
+migr_par_h = []
 
-    ax1.set_xlabel('steps')
-    plt.show() #optional
+for i in range(len(households)):
+    migr_par_h.append(households[i].migration_pr)
+
+for i in range(len(cons_firms)):
+    migr_par.append(cons_firms[i].distances_mig)
     
-def plot_list_log(variable, steps, title="Graph"):
-    data0 = []
-    data1 = []
-    for i in steps:
-        data0.append(variable[i][0])
-        data1.append(variable[i][1])
-    fig, (ax0, ax1) = plt.subplots(2, 1)
-    fig.suptitle(title)
+    
+    
+    
+    mp.append(cons_firms[i].distances_mig[0])
+    region.append(cons_firms[i].region_history[1])
+    demand_distance.append(cons_firms[i].distances_mig[0])
+    wage_distance.append(cons_firms[i].distances_mig[1])
+    delta_pr.append(cons_firms[i].distances_mig[2])
+    
 
-    ax0.plot(data0)
-    ax0.set_yscale("log")
-    ax0.set_ylabel("Region 0")
+'''
+Band pass filter
+'''
 
-    ax1.plot(data1)
-    ax1.set_yscale("log")
-    ax1.set_ylabel("Region 1")
+gdp = af.mean_variable_log(macro_variable, 'GDP total', 50)
+inv = af.mean_variable_log(macro_variable, 'INV Total', 50)
+cons = af.mean_variable_log(macro_variable, 'CONS Total', 50)
 
-    ax1.set_xlabel('steps')
-    plt.show() #optional
+bp = pd.concat([gdp, inv, cons], axis = 1)
+bp.columns = ['GDP', 'INV', 'CONS']
+cycles = sm.tsa.filters.bkfilter(bp[['INV','CONS', 'GDP']], 6, 32, 12)
+#macro_variable['Log GDP cons total']= np.log(macro_variable['GDP cons total'])
+#log_mv = macro_variable.filter(like = 'Log')
+#log_mv = log_mv.drop(log_mv.index[:100])#
+#log_mv = log_mv.drop(log_mv.index[200:])
 
+
+
+#cf_cycles, cf_trend = sm.tsa.filters.cffilter(log_mv[['Log INV','Log CONS', 'Log GDP cons total']])
+std_bp_gdp = cycles['GDP_cycle'].std() #/ abs(cycles['GDP_cycle'].mean()) 
+std_bp__cons =  cycles['CONS_cycle'].std()# / abs(cycles['CONS_cycle'].mean())
+std_bp_inv =  cycles['INV_cycle'].std()# / abs(cycles['INV_cycle'].mean())
+
+fig = plt.figure(figsize=(14,10))
+ax = fig.add_subplot(111)
+cycles.plot(ax=ax, style=['r--','b-'])
+print(cf_cycles.head(10))
+#macro_variable['Households region 0 rate'] = macro_variable['Households region 0'] / (macro_variable['Households region 0'] + macro_variable['Households region 1'])
+#macro_variable['Households region 1 rate'] = macro_variable['Households region 1'] / (macro_variable['Households region 0'] + macro_variable['Households region 1'])
+#macro_variable['INV region 1 rate'] = macro_variable['INV 1'] / (macro_variable['INV 0'] + macro_variable['INV 1'])
+#macro_variable['INV region 0 rate'] = macro_variable['INV 0'] / (macro_variable['INV 0'] + macro_variable['INV 1'])
+#macro_variable['GDP region 0 rate'] = macro_variable['GDP region 0'] / (macro_variable['GDP region 0'] + macro_variable['GDP region 1'])
+fig, ax = plt.subplots()
+cycles.plot(ax=ax, style=['r--', 'b-'], label = 'INV')
+plt.show()
+
+
+'''
+PLOT SIZE DISTRIBUTION
+'''
+
+agents = model.firms1
+demand_ditance_list = []
+
+for i in range(len(agents)):
+    if agents[i].region == 1:
+        demand_ditance_list.append(agents[i])
+    
+
+households = model.households
+for i in range(len(households)):
+    demand_ditance_list.append(households[i].migration_pr)
+    
+    
+'''
+CORRELATION STRUCTURE
+'''
+
+
+drop= 50
+drop_end = 0
+#df = df_t_001
+df = macro_variable
+output = af.mean_variable_log(df, 'GDP total', drop, drop_end)
+cons = af.mean_variable_log(df, 'CONS Total', drop, drop_end )
+inv =  af.mean_variable_log(df, 'INV Total', drop, drop_end)
+prices = af.mean_variable_log(df, 'Cons price region 1', drop, drop_end)
+unemployment = af.mean_variable(df, 'Unemployment rate', drop, drop_end)
+
+corr_list  = [ unemployment,  prices , inv , cons ,output ]
+df_corr = pd.concat(corr_list, axis = 1)
+df_corr.columns = [ 'Unemployment','Price',  'Inv',  'Cons','Output']
+cycles = sm.tsa.filters.bkfilter(df_corr[['Output', 'Cons', 'Inv', 'Price', 'Unemployment']], 6, 32, 12)
+cycles.columns = [    'Output' , 'Cons', 'Inv', 'Price','Unemployment']
+#corrMatrix = df_corr.corr(method='pearson')
+corrMatrix = cycles.corr(method='pearson')
+sns.heatmap(corrMatrix, annot=True)
+plt.show()
+fig, ax = plt.subplots(figsize=(6, 6)) 
+mask = np.zeros_like(corrMatrix.corr())
+mask[np.triu_indices_from(mask)] = 1
+sns.heatmap(corrMatrix, mask= mask, ax= ax, annot= True)
+
+
+firm_list = model.list_firms
+
+
+price_time_firm_list = model.list_firms[200]
+price_ms_list = []
+price_ms_list_cap = []
+demand_cap = []
+orders_cons = []
+for i in range(len(price_time_firm_list)):
+    agent = price_time_firm_list[i]
+    if agent.type == 'Cap' and agent.region ==1:
+        price_ms_list_cap.append([agent, agent.price, agent.net_worth])
+        #if sum(agent.real_demand_cap) != 0: 
+           # demand_cap.append( [agent, agent.real_demand_cap, agent.unique_id])
+    if agent.type == 'Cons' and agent.region == 1:
+        price_ms_list.append([agent, agent.price, agent.markup])
+        #if agent.quantity_ordered != 0 and agent.supplier_id == 24:
+           # orders_cons.append([agent, agent.quantity_ordered, agent.supplier_id])
+            
+        
+        
+    
+    #price_ms_list.append([price_time_firm_list[i].price, price_time_firm_list[i].market_share, price_time_firm_list[i].wage, price_time_firm_list[i].lifecycle, price_time_firm_list[i].region, price_time_firm_list[i].type])
