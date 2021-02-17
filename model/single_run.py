@@ -19,10 +19,10 @@ import pandas as pd
 import statsmodels.api as sm
 
 
-steps =  250
+steps =  200
 
 
-model = KSModel(F1 = 50, F2 =250, H = 3500, B= 1,  T= 0.03, S = 0.5)
+model = KSModel(F1 = 60, F2 =250, H = 3500, B= 1,  T= 0.03, S = 0)
 model.reset_randomizer(1)
 for i in range(steps):
     print("#------------ step", i+1, "------------#")
@@ -47,8 +47,8 @@ macro_variable[['Prod region 0','Prod region 1', 'Delta prod region 0', 'Delta p
 macro_variable[['GDP region 0','GDP region 1', 'GDP total']] = pd.DataFrame(macro_variable.GDP.to_list(), index= macro_variable.index)
 macro_variable[['Unemployment region 0','Unemployment region 1', 'Unemployment diff 0','Unemployment diff 1' ]] = pd.DataFrame(macro_variable.Unemployment_Regional.to_list(), index= macro_variable.index)
 #macro_variable[['MS track 0', 'MS track 1']] = pd.DataFrame(macro_variable.MS_track.to_list(), index= macro_variable.index)
-macro_variable[['CONS 0', 'CONS 1', 'CONS Total', 'CONS difference 0', 'CONS difference 1', 'Export']] = pd.DataFrame(macro_variable.CONSUMPTION.to_list(), index= macro_variable.index)
-macro_variable[['INV 0', 'INV 1', 'INV Total', 'INV difference 0', 'INV difference 1']] = pd.DataFrame(macro_variable.INVESTMENT.to_list(), index= macro_variable.index)
+macro_variable[['CONS 0', 'CONS 1', 'CONS Total', 'Export']] = pd.DataFrame(macro_variable.CONSUMPTION.to_list(), index= macro_variable.index)
+macro_variable[['INV 0', 'INV 1', 'INV Total']] = pd.DataFrame(macro_variable.INVESTMENT.to_list(), index= macro_variable.index)
 macro_variable[['GDP cons region 0','GDP cons region 1', 'GDP cons total']] = pd.DataFrame(macro_variable.GDP_cons.to_list(), index= macro_variable.index)
 macro_variable_csv_data = macro_variable.to_csv('data_model_.csv', index  = True)
 macro_variable[['Aggr unemployment region 0','Aggr unemployment region 1']] = pd.DataFrame(macro_variable.Aggregate_Unemployment.to_list(), index= macro_variable.index)
@@ -166,7 +166,7 @@ plot_list_2var_comp_first_difference(macro_variable.INVESTMENT,macro_variable.Av
 '''
 #macro_variable = macro_variables[2]
 
-transition = 0
+transition = 10
 #plot_list_2var_comp_first_difference(macro_variable.GDP,macro_variable.Consumption_firms_av_prod ,200 , 50, "Turning the tide of agglomeration")
 af.plot_list_log(macro_variable.INVESTMENT, range(transition, steps), "Investment")
 af.plot_list_log(macro_variable.CONSUMPTION, range(transition, steps), "Consumption")

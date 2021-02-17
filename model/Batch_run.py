@@ -2,8 +2,11 @@
 # bringing all elements of the model together
 # contains run method
 
-from mesa.batchrunner import BatchRunner , BatchRunnerMP, ParameterProduct, ParameterSampler
-from multiprocessing import freeze_support
+from model.modules.batchrunner_local import BatchRunnerMP , ParameterProduct, ParameterSampler
+from functools import reduce
+from operator import mul
+import unittest
+from multiprocessing import freeze_support, cpu_count
 
 from model.classes.capital_good_firm import CapitalGoodFirm
 from model.classes.consumption_good_firm import ConsumptionGoodFirm
@@ -24,7 +27,7 @@ fixed_params = {"width": 1,
                 'S' : 0 } 
 variable_params = {"T" : range(0, 100, 10)}
 
-nr_processes = 2
+
 iterations = 1
 max_steps = 10
 
@@ -36,62 +39,7 @@ model_reporters = {
                 # "Unemployment_Region0" : regional_unemployment_rate_region0,
                 "Regional_Costs" : regional_costs, 
                 "Average_Salary" : regional_average_salary,
-                "Average_Salary_Capital" : regional_average_salary_cap,
-                "Average_Salary_Cons" : regional_average_salary_cons,
-                "Competitiveness_Regional" : regional_average_competitiveness,
-                "Aggregate_Employment" : regional_aggregate_employment,
-                "Aggregate_Unemployment" : regional_aggregate_unemployment,
-                "Unemployment_Regional" : regional_unemployment_rate,
-                "Regional_unemployment_subsidy": regional_unemployment_subsidy,
-                #"Population_Regional" : regional_population_total,
-                "Population_Regional_Households" : regional_population_households,
-               # "Population_Region_0_Households" :regional_population_households_region_0,
-                #"Population_Region_0_Cons_Firms":regional_population_cons_region_0,
-                #"Population_Region0_Households" : regional_population_households_region_0,
-                "Population_Regional_Cons_Firms" : regional_population_cons, 
-                #"Population_Region0_Cons_Firms" : regional_population_cons_region_0,
-                "Population_Regional_Cap_Firms" : regional_population_cap,
-                "Capital_Regional" : regional_capital,
-               # "Investmen_units" : investment_units,
-                #"Investment_units" : investment_units,
-               # "Capital_firms_av_prod" : productivity_capital_firms_average,
-                #"Capital_firms_av_prod_region_1" : productivity_capital_firms_region_1_average,
-                "Regional_average_productivity" : productivity_firms_average,
-              #  "Consumption_firms_av_prod" : productivity_consumption_firms_average,
-                "Cosumption_price_average" : price_average_cons,
-                 "Capital_price_average" : price_average_cap,
-                #"RD_CCA_INVESTMENT" : RD_CCA_investment,
-                #"Average_CCA_coeff" :  RD_coefficient_average,
-                #'Sectoral_debt': sectoral_aggregate_debt, 
-                # 'Sectoral_liquid_assets': sectoral_aggregate_liquid_assets,
-                "GDP_cons": gdp_cons,
-                "GDP_cap": gdp_cap,
-                
-                "INVESTMENT" : investment,
-                "INVENTORIES" : inventories,
-                #"Regional_fiscal_balance" : regional_balance,
-               "Regional_sum_market_share" : regional_aggregate_market_share,
-                  "Regional_average_profits_cons" : regional_average_profits_cons,
-                  "Regional_average_profits_cap": regional_average_profits_cap,
-                  "Regional_average_NW" : regional_average_nw,
-                 # "Capital_price_average" : price_average_cap,
-                  # :regional_profits_cap,
-                  "Regional_profits_cons" : regional_profits_cons,
-                # "labor check " : consumption_labor_check,
-                 "Cons_regional_IDs" : cons_ids_region,
-                # "Firms_regions" :firm_region,
-                 "Minimum_wage" : regional_minimum_wage,
-                 "orders": quantity_ordered,
-                 "Top_prod": top_prod,
-                 "Top_wage": top_wage,
-                 'MS_exp': ms_exp, 
-                 #'Demand_exp_ratio' : demand_export_rate,
-                 "CONSUMPTION" : consumption,
-                # 'Sales_firms' : sales_firms
-               # "Market_share_normalized" : market_share_normalized,
-                "LD_cap" : ld_cap,
-                "LD_cons" : ld_cons
-                #"MS_track" : ms_region
+
             }
 agent_reporters={"Net worth": lambda x: x.net_worth if x.type == "Cons" else None, 
                              'Size' :     lambda x: len(x.employees_IDs) if  x.type == "Cons" else None,
@@ -103,18 +51,20 @@ agent_reporters={"Net worth": lambda x: x.net_worth if x.type == "Cons" else Non
                              'Region':    lambda x: x.region if  x.type == "Cons" else None,
                              'Lifecycle': lambda x: x.lifecycle if  x.type == "Cons" else None}
         
+max_steps = 20
 
-batch_run = BatchRunnerMP(KSModel , nr_processes = 2, variable_parameters= variable_params,
+batch_run = BatchRunnerMP(KSModel , nr_processes = 8, variable_parameters= variable_params,
             fixed_parameters=fixed_params,
             iterations=iterations,
             max_steps=max_steps,
-            model_reporters = model_reporters)
+            model_reporters = model_reporters,
+            display_progress=True)
 
 
 
 batch_run.run_all()
 
-run_data = batch_run.get_model_vars_dataframe()
+run_data = batch_run.get_collector_model()
 run_data.head()
 
 #macro_variable[['LD cons 0', 'LD cons 1']] = pd.DataFrame(macro_variable.LD_cons.to_list(), index= macro_variable.index)

@@ -15,14 +15,14 @@ from scipy.stats import bernoulli
 '''
 Calculation of households probability to migrate
 '''
-def households_migration_probability(region, model, w_1 =1): #, w_2 = 0.5, mc = 0.05): 
+def households_migration_probability(region, model, w_1 = 1): 
     ##--retrieve relevant parameters --#
     prob_migration = 0
     gov = model.governments[0]
     unemployment_diff = gov.unemployment_rates[2 + region]
     wage_diff=  gov.average_wages[2 + region]
-    if  wage_diff < 0  and unemployment_diff < 0:
-        prob_migration = 1-math.exp(w_1* wage_diff) # + w_2 * unemployment_diff)
+    if  wage_diff < 0 and unemployment_diff < 0:
+        prob_migration = 1-math.exp(w_1* wage_diff )
    # migration_pr.append([wage_diff, unemployment_diff, prob_migration, region])
     
     '''
@@ -96,14 +96,14 @@ def household_migrate(mp, model, region, unique_id):
    average_profits_other_reg: prfits made on average by the same sector in the other region
 	my_wage : wage offered by the firm
 '''
-def firms_migration_probability(demand_distance, r, my_wage,  model,  w_1 = 0.5, w_2 = 0.5):
+def firms_migration_probability(demand_distance, r,   model,  w_1 = 0.5, w_2 = 0.5):
     
     prob_migration = 0
 
     profitability = model.datacollector.model_vars["Regional_profits_cons"][int(model.schedule.time)][r + 2]
     #gov = model.governments[0]
     #profitability = gov.net_sales_cons_firms[r + 2]
-    if demand_distance < 0 and profitability < 0: 
+    if profitability < 0: 
           prob_migration =  1 - math.exp(w_1 * demand_distance  +   w_2 * profitability) 
     
     return prob_migration
@@ -149,7 +149,7 @@ def firm_migrate(mp, model, region, unique_id, employees_IDs, net_worth, wage, c
                 firm.price = gov.av_price_cons[1 - region]  #* 1.1
         
             if firm.type == "Cap":
-                wage = gov.salaries_cap[1 - region] #* 1.1
+                wage = gov.salaries_cap[1 - region] # * 1.05
                 firm.price = gov.av_price_cap[1 - region] # * 1.1
             
             

@@ -11,7 +11,7 @@ from model.classes.model import KSModel
 import matplotlib.pyplot as plt
 #import model.modules.data_analysis as da
 import model.modules.additional_functions as af
-import random
+#import random
 import seaborn as sns
 import numpy as np
 import pandas as pd   
@@ -19,25 +19,22 @@ import pandas as pd
 
 
 
-
-
-runs= 10
-steps = 250#
+runs= 80
+steps = 300
 macro_variables = []
 micro_variables = []
 model_lists = []
 for i in range(runs):
     
-    model = KSModel(F1 = 50, F2 =250, H = 3500, B= 1,  T= 0.03, S = 0.5)
-    model.reset_randomizer(i + 15)
+    model = KSModel(F1 = 50, F2 =250, H = 3500, B= 1,  T= 0.04, S = 0)
+    model.reset_randomizer(i + 10)
     print("#-------------- iteration", i+1, "---------------#")
     for j in range(steps):
         #print("#------------ step", j+1, "------------#")
         model.step()
     run_data = model.datacollector.get_model_vars_dataframe()
-    micro_data = model.datacollector.get_agent_vars_dataframe()
-    micro_data = micro_data.dropna()
-
+   # micro_data = model.datacollector.get_agent_vars_dataframe()
+    #micro_data = micro_data.dropna()
     #model_lists.append(model)
     '''
     ### PLOT ##
@@ -57,16 +54,15 @@ for i in range(runs):
     af.plot_list(run_data.Consumption_firms_av_prod, range(steps), " Average productivity Cons firms")
     '''
     ## TRANSOFOR MICRO ##
-    micro_data[['Prod 0','Prod 1']] = pd.DataFrame(micro_data.Prod.to_list(), index= micro_data.index)
-    micro_data[['MS 0','MS 1', 'MS Exp']] = pd.DataFrame(micro_data.Ms.to_list(), index= micro_data.index)
-
-    micro_variables.append(micro_data)
+    #micro_data[['Prod 0','Prod 1']] = pd.DataFrame(micro_data.Prod.to_list(), index= micro_data.index)
+    #micro_data[['MS 0','MS 1', 'MS Exp']] = pd.DataFrame(micro_data.Ms.to_list(), index= micro_data.index)
+    #micro_variables.append(micro_data)
     
     ## TRANSFORM MACRO##
-
-
+    
     macro_variable = run_data
     
+    macro_variable[['Av wage region 0','Av wage region 1', 'Wage diff 0', 'Wage diff 1']] = pd.DataFrame(macro_variable.Average_Salary.to_list(), index= macro_variable.index)
     macro_variable[['Cons region 0','Cons region 1']] = pd.DataFrame(macro_variable.Population_Regional_Cons_Firms.to_list(), index= macro_variable.index)
     macro_variable[['Cap region 0','Cap region 1']] = pd.DataFrame(macro_variable.Population_Regional_Cap_Firms.to_list(), index= macro_variable.index) 
     macro_variable[['Households region 0','Households region 1']] = pd.DataFrame(macro_variable.Population_Regional_Households.to_list(), index= macro_variable.index)
@@ -77,8 +73,8 @@ for i in range(runs):
     macro_variable[['GDP region 0','GDP region 1', 'GDP total']] = pd.DataFrame(macro_variable.GDP.to_list(), index= macro_variable.index)
     macro_variable[['Unemployment region 0','Unemployment region 1', 'Unemployment diff 0','Unemployment diff 1' ]] = pd.DataFrame(macro_variable.Unemployment_Regional.to_list(), index= macro_variable.index)
 #macro_variable[['MS track 0', 'MS track 1']] = pd.DataFrame(mac 7V'CONS difference 1']] = pd.DataFrame(macro_variable.CONSUMPTION.to_list(), index= macro_variable.index)
-    macro_variable[['CONS 0', 'CONS 1', 'CONS Total', 'CONS difference 0', 'CONS difference 1', 'Export']] = pd.DataFrame(macro_variable.CONSUMPTION.to_list(), index= macro_variable.index)
-    macro_variable[['INV 0', 'INV 1', 'INV Total', 'INV difference 0', 'INV difference 1']] = pd.DataFrame(macro_variable.INVESTMENT.to_list(), index= macro_variable.index)
+    macro_variable[['CONS 0', 'CONS 1', 'CONS Total', 'Export']] = pd.DataFrame(macro_variable.CONSUMPTION.to_list(), index= macro_variable.index)
+    macro_variable[['INV 0', 'INV 1', 'INV Total']] = pd.DataFrame(macro_variable.INVESTMENT.to_list(), index= macro_variable.index)
     macro_variable[['GDP cons region 0','GDP cons region 1', 'GDP cons total']] = pd.DataFrame(macro_variable.GDP_cons.to_list(), index= macro_variable.index)
     macro_variable_csv_data = macro_variable.to_csv('data_model_.csv', index  = True)
     macro_variable[['Aggr unemployment region 0','Aggr unemployment region 1']] = pd.DataFrame(macro_variable.Aggregate_Unemployment.to_list(), index= macro_variable.index)
@@ -87,8 +83,7 @@ for i in range(runs):
     macro_variable['Aggr employment'] = macro_variable['Aggr employment region 0'] + macro_variable['Aggr employment region 1']
     macro_variable['Unemployment rate'] = macro_variable['Aggr unemployment'] / (macro_variable['Aggr unemployment'] + macro_variable['Aggr employment'])
     macro_variable[['Sum MS region 0','Sum MS region 1', 'Sum MS exp', 'Exp share region 0', 'Exp share region 1']] = pd.DataFrame(macro_variable.Regional_sum_market_share.to_list(), index= macro_variable.index)
-    macro_variable[['Wages region 0','Wages region 1','Wage diff 0', 'Wage diff 1']] = pd.DataFrame(macro_variable.Average_Salary.to_list(), index= macro_variable.index)
-    macro_variable['Wage prod ratio 0']= macro_variable['Wages region 0']/ macro_variable['Prod region 0']
+    macro_variable['Wage prod ratio 0']= macro_variable['Av wage region 0']/ macro_variable['Prod region 0']
     macro_variables.append(macro_variable)
 #df_multiple_runs = pd.DataFrame(macro_variables) 
 
@@ -96,12 +91,9 @@ for i in range(runs):
 
 
 result_1 = pd.concat(macro_variables, axis = 1 , copy = False)
-
 micro_result_1 = pd.concat(micro_variables, axis = 1)
-
-
 transition = 15
-#result_1.to_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\prova\model\data_results\75RUNS_T003_S05.csv')         
+#result_1.to_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\test.csv')         
 inv_gr_0 = af.variable_growth_rate(result_1, 'INV 0', transition, steps)
 inv_gr_1 = af.variable_growth_rate(result_1, 'INV 1', transition, steps)
 #steps = 150
@@ -115,11 +107,13 @@ gdp_gr = af.variable_growth_rate(result_1, 'GDP total', transition, steps)
 gdp_gr_0 = af.variable_growth_rate(result_1, 'GDP region 0', transition, steps)
 gdo_gr_1 = af.variable_growth_rate(result_1, 'GDP region 1', transition, steps)
 
+'''
 df_gdp_pct = result_1.filter(like = 'GDP total').pct_change()
 df_gdp = result_1.filter(like = 'GDP total')
 
 df_gdp_aggl_preflood = df_gdp.iloc[:, [0,1,2,3,4,7,8,10,11,13,14]]
-last_raw = df_gdp_aggl_preflood.iloc[300, :] #.mean(axis = 1)
+last_raw = df_gdp_aggl_preflood.iloc[300, :]
+'''
 
 mean_gdp_0 = af.mean_variable_log(result_1, 'GDP region 0')
 mean_gdp_1 = af.mean_variable_log(result_1, 'GDP region 1')
@@ -155,17 +149,11 @@ CONSUMPTION FIRMS
 firms_gr_0 = af.variable_growth_rate(result_1, 'Cons region 0', transition, steps)
 firms_gr_1 = af.variable_growth_rate(result_1, 'Cons region 1', transition, steps)
 
-df = result_1.filter(like = 'Cons region 0')
-df.loc[ : ,  df.loc[40, :] == 0 ]
-
-#df_50 = all_cons_firms_coastal.loc[all_cons_firms_coastal.index == 50]
-
-
-
-
-
 mean_cons_0 = af.mean_variable(result_1, 'Cons region 0')
 mean_cons_1 = af.mean_variable(result_1, 'Cons region 1')
+
+df = result_1.filter(like = 'Cons region 0')
+df.loc[ : ,  df.loc[40, :] == 0 ]
 
 firms_plot = [[mean_cons_0, 'Coastal region', 'blue'], [mean_cons_1, 'Inland region', 'green']]
 af.plot(firms_plot, 0, 350)
@@ -207,7 +195,8 @@ unemployment_mean_1 = df_unemployment_1['Mean Unemployment region 1'].mean()
 BANDPASS FILTER
 '''
 import statsmodels.api as sm
-#result_1 = macro_variables[10]
+
+result_1 = macro_variables[50]
 
 gdp = af.mean_variable_log(result_1, 'GDP total',100)
 inv = af.mean_variable_log(result_1, 'INV Total', 100)
@@ -942,14 +931,11 @@ af.plot_list(macro_variable.Population_Regional_Cap_Firms, range(transition,  st
 #macro_variable = macro_variables[3]
 
 ##--- ANALYZING MULTIPLE RUNS ---##
-del macro_variables[10]
-del macro_variables[12] 
- 
 df_pi = macro_variables[7]
-
+df_pi[['Av wage region 0','Av wage region 1', 'Wage diff 0', 'Wage diff 1']] = pd.DataFrame(df_pi.Average_Salary.to_list(), index= df_pi.index)
+df_pi['Wage prod ratio 0']= df_pi['Av wage region 0']/ df_pi['Prod region 0']
 df_pi_int = df_pi[['Cons price region 0', 'Prod region 0', 'Av wage region 0', 'Delta prod region 0','Wage prod ratio 0'  ]]
-
-transition = 0
+ 
 for i in range(len(macro_variables)):
     print(i)
     macro_variable = macro_variables[i]
@@ -960,8 +946,8 @@ for i in range(len(macro_variables)):
 #plot_list(macro_variable.Aggregate_Employment, range(transition, steps), "Aggregate Employment")
 #plot_list(macro_variable.Population_Regional, range(steps), "Population")
 #af.plot_list_log(macro_variable.Average_Salary, range(transition, steps) , "Average Salary")
-   # af.plot_list(macro_variable.Population_Regional_Households, range(transition,steps), "Number of households")
-    #af.plot_list_log(macro_variable.Cosumption_price_average,  range(transition,  steps) , "Consumption price average")
+    af.plot_list(macro_variable.Population_Regional_Households, range(transition,steps), "Number of households")
+   # af.plot_list_log(macro_variable.Cosumption_price_average,  range(transition,  steps) , "Consumption price average")
     af.plot_list(macro_variable.Population_Regional_Cons_Firms, range(transition, steps), "Number of consumption firms")
 #af.plot_list_log(macro_variable.Capital_firms_av_prod, range(transition, steps), " Average productivity Cap firms")
     #af.plot_list(macro_variable.Population_Regional_Cap_Firms, range(transition,  steps), "Number of capital  firms")
@@ -982,28 +968,28 @@ df_run_1 = macro_variables[0]
 df_run_2 = macro_variables[1]
 df_run_3 = macro_variables[2]
 df_run_4 = macro_variables[3]
-df_run_even = macro_variables[3]
-df_run_inland = macro_variables[2]
+df_run_even = macro_variables[41]
+df_run_inland = macro_variables[4]
 
 df_t002_different_cases = pd.concat([df_run_1, df_run_even, df_run_inland])
 
 df_t002_different_cases.to_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\t002_scenario.csv')    
 
 firms_pop = 250
-drop = 0
+drop = 90
 drop_end = 200
-households_pop = 3500
-cap_pop = 50
+households_pop = 4000
+cap_pop = 60
 
 ## ------ % of consumption firms in Coastal region -----###
 
 perc_firms_0_run_1 =  af.mean_variable(df_run_1, 'Cons region 0', drop) / firms_pop
-perc_firms_0_run_even =  af.mean_variable(df_run_even, 'Cons region 0', drop) / firms_pop
-perc_firms_0_run_inland =  af.mean_variable(df_run_inland, 'Cons region 0', drop) / firms_pop
+#perc_firms_0_run_even =  af.mean_variable(df_run_even, 'Cons region 0', drop) / firms_pop
+#perc_firms_0_run_inland =  af.mean_variable(df_run_inland, 'Cons region 0', drop) / firms_pop
 #perc_firms_0_t002 =  af.mean_variable(df_t_002, 'Cons region 0', drop_firm) / firms_pop
 perc_firms_0_run_2 =  af.mean_variable(df_run_2, 'Cons region 0', drop) / firms_pop
-#perc_firms_0_run_3 =  af.mean_variable(df_run_3, 'Cons region 0', drop) / firms_pop
-#perc_firms_0_run_4 =  af.mean_variable(df_run_4, 'Cons region 0', drop) / firms_pop
+perc_firms_0_run_3 =  af.mean_variable(df_run_3, 'Cons region 0', drop) / firms_pop
+perc_firms_0_run_4 =  af.mean_variable(df_run_4, 'Cons region 0', drop) / firms_pop
 
 
 ##-----% of households in coastal region ----###
@@ -1158,14 +1144,12 @@ ax.set_ylabel("Productivity ratio", fontsize = 14)
 plt.legend()
 plt.show()
 
-drop_firm = 0
-drop_end = 50
 
 
 d_ration_firms_run_1 =  af.mean_variable(df_run_1, 'CONS 0', drop, drop_end) / af.mean_variable(df_run_1, 'CONS 1', drop, drop_end)
 d_ration_firms_run_even =  af.mean_variable(df_run_even, 'CONS 0', drop, drop_end) / af.mean_variable(df_run_even, 'CONS 1', drop, drop_end)
 d_ration_firms_run_inland =  af.mean_variable(df_run_inland, 'CONS 0', drop, drop_end) / af.mean_variable(df_run_inland, 'CONS 1', drop, drop_end)
-d_ration_firms_run_2 =  af.mean_variable(df_run_2, 'CONS 0', drop_firm) / af.mean_variable(df_run_2, 'CONS 1', drop_firm , drop_end)
+#d_ration_firms_run_2 =  af.mean_variable(df_run_2, 'CONS 0', drop_firm) / af.mean_variable(df_run_2, 'CONS 1', drop_firm , drop_end)
 #d_ration_firms_run_3=  af.mean_variable(df_run_3, 'CONS 0', drop_firm) / af.mean_variable(df_run_3, 'CONS 1', drop_firm, drop_end)
 #d_ration_firms_run_4 =  af.mean_variable(df_run_4, 'CONS 0', drop_firm) / af.mean_variable(df_run_4, 'CONS 1', drop_firm, drop_end)
 #prod_ration_firms_t01 =  af.mean_variable(df_t_01, 'Prod region 0', drop_firm) / af.mean_variable(df_t_01, 'Prod region 1', drop_firm)
@@ -1178,7 +1162,7 @@ ax = fig.add_subplot(111)
 ax.plot( d_ration_firms_run_1 ,  label = 'Coastal', color = 'blue')	
 ax.plot( d_ration_firms_run_even ,  label = 'Even', color = 'black')
 ax.plot( d_ration_firms_run_inland ,  label = 'Even', color = 'green')	
-ax.plot( d_ration_firms_run_2 ,  label = 'Run 2', color = 'green')	
+#ax.plot( d_ration_firms_run_2 ,  label = 'Run 2', color = 'green')	
 #ax.plot(d_ration_firms_run_3 , label = 'Run 3', color = 'black', )	
 #ax.plot( d_ration_firms_run_4 ,label = 'Run 4', color = 'blue')	
 #ax.plot(  prod_ration_firms_t01 ,label = 't - 0.1',  color = 'yellow', )	

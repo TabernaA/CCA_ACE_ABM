@@ -156,8 +156,8 @@ def gdp(model):
 def investment(model):
     I0 = 0
     I1 = 0
-    I1_log = 0
-    I0_log = 0
+   # I1_log = 0
+    #I0_log = 0
     agents = model.firms2  #model.schedule.agents
     for i in range(len(agents)):
         firm = agents[i]
@@ -167,7 +167,7 @@ def investment(model):
         elif firm.region == 1:
             I1 += firm.investment_cost
 
-    
+    '''
     inv_difference0 = 0
     inv_difference1 = 0
     
@@ -180,9 +180,9 @@ def investment(model):
         inv_difference0 = max( -0.5 , ( I0_log - I1_log) / (I0_log + 0.001))
     if I0 > I1:
         inv_difference1 =  max( -0.5 , (I1_log - I0_log) / (I1_log + 0.001))
- 
+    '''
 
-    return[ round(I0, 3), round(I1, 3), I0 + I1,inv_difference0, inv_difference1 ]
+    return[ round(I0, 3), round(I1, 3), I0 + I1 ]
 
 def inventories(model):
     INV0 = 0
@@ -333,6 +333,7 @@ def regional_profits_cons(model,x2 =0.15 ):
     
     profit0_old = profits_old[0]
     profit1_old = profits_old[1]
+    
     if profit0_old == 0:
         profit0_old = profits[0]
         
@@ -349,10 +350,10 @@ def regional_profits_cons(model,x2 =0.15 ):
     #print("Total profits cons are  ", [profit0, profit1])
     
     
-    if profitability0 < profitability1 and profit1 > 0: # and profitability1 > 0:
+    if profitability0 < profitability1 and profit1 > profit0: # and profitability1 > 0:
         prof_difference0 =  max( -0.5 , (profitability0 - profitability1) / abs(profitability0 + 0.001))
     
-    if profitability1 < profitability0  and profit0 > 0: # and profitability0 > 0:
+    if profitability1 < profitability0 and profit0 > profit1 : # profitability0 > 0:
         prof_difference1 = max( -0.5 , ( profitability1 - profitability0) / abs( profitability1 + 0.001))
     '''
     if profit0_old == 0:

@@ -17,11 +17,20 @@ class Household(Agent):
         self.employer_ID = None
         self.type = "Household"
         self.lifecycle = 0
-       # self.migration_pr = self.model.pr_migration_h
+        self.migration_pr = self.model.pr_migration_h
         self.migration_start = 80
+        self.net_worth = None
+        self.employees_IDs = None
+        self.capital_vintage = None
+        self.wage = None
+        self.price = None
+        self.productivity = None
+        self.market_share = None
+        
+        
         
     def migration(self):
-        #if bernoulli.rvs(self.migration_pr) == 1:# and self.model.schedule.time > self.model.start_migration:
+        if bernoulli.rvs(self.migration_pr) == 1:# and self.model.schedule.time > self.model.start_migration:
             
             '''
             if self.employer_ID != None:
@@ -49,7 +58,7 @@ class Household(Agent):
 
     def stage0(self):
         
-        if self.lifecycle > 16: # and  self.model.schedule.time > self.migration_start:
+        if self.lifecycle > 12: # and  self.model.schedule.time > self.migration_start:
           #  if self.employer_ID == None:
                 #if self.employer_ID % 10 != 0:
                self.migration()

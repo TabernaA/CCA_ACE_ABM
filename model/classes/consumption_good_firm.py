@@ -79,7 +79,7 @@ class ConsumptionGoodFirm(Agent):
         #Migration tracking
         self.distances_mig = []
         self.region_history = []
-      #  self.migration_pr = self.model.pr_migration_f
+        self.migration_pr = self.model.pr_migration_f
         self.migration_start = 80
         
 
@@ -163,11 +163,11 @@ class ConsumptionGoodFirm(Agent):
         self.replacement_investment_units =  round(self.calc_replacement_investment() )     
         #print( "ID", self.unique_id,"capital_stock ", capital_stock, "expected production", expected_production, "desired production ", desired_production, "feasible production " , self.feasible_production)
         #print("replacement investment_", self.replacement_investment_units, "expasion investment", self.expansion_investment_units, "capital stock", capital_stock)
-        
-       # if self.flooded == True:
-        #    self.expansion_investment_units = 0 
-         #   self.replacement_investment_units = 0
-
+        '''
+        if self.flooded == True:
+            self.expansion_investment_units = 0 
+            self.replacement_investment_units = 0
+        '''
         
 
     def calc_replacement_investment(self):
@@ -229,86 +229,26 @@ class ConsumptionGoodFirm(Agent):
         
         supplier = self.model.schedule.agents[self.supplier_id]                                                # record the supplier
         total_number_machines_wanted = self.expansion_investment_units + self.replacement_investment_units
+        total_quantity_affordable_own = max( 0 , self.net_worth // supplier_price)
+        
+        quantity_bought = min( total_number_machines_wanted, total_quantity_affordable_own)
         #print( "expnasion investment units ", self.expansion_investment_units) #count how many machines I want to buy 
         
+        if quantity_bought < total_number_machines_wanted and self.net_worth > 0:
+             debt_affordable = self.sales * self.model.debt_sales_ratio
+             maximum_debt_quantity =  debt_affordable // supplier_price
+             quantity_bought = min( total_number_machines_wanted , total_quantity_affordable_own + maximum_debt_quantity)
+             
+             self.debt = min( debt_affordable, ( total_quantity_affordable_own + maximum_debt_quantity - total_number_machines_wanted)  * supplier_price )
+             if self.debt >= debt_affordable:
+                 self.credit_rationed = True 
+        
+        self.quantity_ordered = quantity_bought
+        self.scrapping_machines = max( 0 , quantity_bought - self.expansion_investment_units)
         ##-- convert units I need into costs --##
-        total_investment_expenditure = max( 0 , total_number_machines_wanted * supplier_price )
+        #total_investment_expenditure = max( 0 , total_number_machines_wanted * supplier_price )
         ##--only if I am not credit constrained --## 
-        if self.net_worth > 0 and total_investment_expenditure > 0:  
-            #Can I finance it with my own funds?
-            if total_investment_expenditure < self.net_worth:
-                # if I can I will buy it all and record the investment cost 
-                self.quantity_ordered =  total_number_machines_wanted    
-                self.investment_cost = total_investment_expenditure
-                self.scrapping_machines = self.replacement_investment_units
-                #print("my investment cost", self.investment_cost, "total investment expenditure", total_investment_expenditure, "total number machines wanted", total_number_machines_wanted)
-            
-            # Can't pay it all by myself
-            else:
-                # if I am credit rationed and can't do new debt 
-                if self.credit_rationed == True: 
-                    # how much I can afford?
-                    maximum_quantity_affordable = round(self.net_worth / supplier_price, 2)
-                    self.quantity_ordered = maximum_quantity_affordable
-                    # expansions investments come first than replacement investments 
-                    if maximum_quantity_affordable <= self.expansion_investment_units:
-                        self.scrapping_machines = 0
-                    elif maximum_quantity_affordable > self.expansion_investment_units:
-                        replacement_machines = maximum_quantity_affordable - self.expansion_investment_units
-                        self.scrapping_machines = replacement_machines
-                    else:
-                        print("something wrong with scrapping machines rationed")
-                    #self.investment_cost = self.quantity_ordered * supplier_price
-                    #if self.investment_cost <0:
-                        #print("my investment cost L 210", self.investment_cost, "quantity ordered", self.quantity_ordered,"supplier price",  supplier_price)
-                    
-                
-                #if I cannot finance with my own funds but I am not credit rationed, I do new debt
-                elif self.credit_rationed == False:
-                    
-                    #maximum amount of debt I can do
-                    maximum_debt = self.sales * self.model.debt_sales_ratio
-                    
-                    # max I can afford with debt
-                    if total_investment_expenditure <= self.net_worth + maximum_debt:                                                     # Can I finance it with my own funds?
-                        self.quantity_ordered =  total_number_machines_wanted    # if I can I will buy it all
-                        #self.investment_cost = self.net_worth
-                        self.debt = self.net_worth -total_investment_expenditure 
-                    #same prodecure as before, see how much I can afford, but here also considering the debt   
-                    elif total_investment_expenditure > self.net_worth + maximum_debt:
-                        maximum_quantity_affordable = round((self.net_worth + maximum_debt )/ supplier_price, 2)
-                        self.quantity_ordered = maximum_quantity_affordable
-                        if maximum_quantity_affordable <= self.expansion_investment_units:
-                            self.scrapping_machines = 0
-                        elif maximum_quantity_affordable > self.expansion_investment_units:
-                             replacement_machines = maximum_quantity_affordable - self.expansion_investment_units
-                        #self.quantity_ordered += replacemente_machines
-                             self.scrapping_machines = replacement_machines
-                        else:
-                            print("something wrong with scrapping machines NOT rationed")
-                    else:
-                        print("something wrong in  Not rationed")
-                    
-                    # check if maximum amount of debt was reached
-                    if abs(self.debt) > maximum_debt:
-                        self.credit_rationed = True 
-                    
 
-
-                        
-                      
-                    
-                else:
-                    print("someting wrong with credit rationing ")
-                
-                # my final investment cost 
-                self.investment_cost = self.quantity_ordered * supplier_price
-                #if self.investment_cost < 0:
-                    #print("my investment cost", self.investment_cost, "quantity ordered", self.quantity_ordered,"supplier price",  supplier_price)
-                    
-                
-                
-                
         
         r = self.region
         self.offers = []
@@ -316,6 +256,7 @@ class ConsumptionGoodFirm(Agent):
                     #print("my investment cost bottom", self.investment_cost, "quantity ordered", self.quantity_ordered,"supplier price",  supplier_price)
         ##-- if was able to order something, I add  mi order to the my supplier's list (regional/export depending if it is in my region or not)
         if self.quantity_ordered > 0:
+            self.investment_cost = self.quantity_ordered * supplier_price
             if supplier.region == r:
                 #print(supplier.unique_id, self.quantity_ordered)
                 supplier.regional_orders.append([self.quantity_ordered, self.unique_id, self.model.schedule.time]) #total_investment is the amount of capital I want to order
@@ -448,8 +389,8 @@ class ConsumptionGoodFirm(Agent):
         '''
         
         ##-- check what was my demand in both region --#
-        self.regional_demand = [round( average_regional_cons[0] * self.market_share[0], 5) , round( average_regional_cons[1] * self.market_share[1], 5)] #,  round( average_regional_cons[2] * self.market_share[2], 5)]
-        self.monetary_demand = round(sum(self.regional_demand) , 6)
+        self.regional_demand = [average_regional_cons[0] * self.market_share[0] ,  average_regional_cons[1] * self.market_share[1]] #,  round( average_regional_cons[2] * self.market_share[2], 5)]
+        self.monetary_demand = sum(self.regional_demand)
         
         ##-- convert monetary in real demand --##
         self.real_demand = round( self.monetary_demand / self.price, 6)
@@ -467,6 +408,7 @@ class ConsumptionGoodFirm(Agent):
         ##-- demand I filled, check if I have unfilled demand --##
         self.demand_filled = min(self.real_demand, (self.production_made + self.inventories))   #did I satisfy my demand with my production + inventories or not?
         #print("demand filled:", self.demand_filled)
+        '''
         if (self.demand_filled ==  (self.production_made + self.inventories)):                  #If I did not fill all the demand with my current production and inventories 
             self.unfilled_demand = self.real_demand - self.production_made - self.inventories   #calculate unfilled demand (to add in competiveness)
             self.inventories = 0                                                                #sold them all
@@ -474,8 +416,13 @@ class ConsumptionGoodFirm(Agent):
             self.inventories += round((self.production_made - self.real_demand) )               #adjust the inventories 
             self.unfilled_demand = 0                                                            #no unfilled demand  
         else: 
-            print("something wrong with demand filled cons ")                                                       
-        
+            print("something wrong with demand filled cons ")  
+        '''
+        my_production = self.production_made + self.inventories
+        self.demand_filled = min(self.real_demand, my_production )                                                     
+        self.unfilled_demand = max( 0 , self.real_demand - my_production)
+        self.inventories = max(0 , my_production - self.real_demand)
+      
         ##--Accounting --#
 
         self.total_costs = (self.production_made * self.cost - self.CCA_RD_budget )
@@ -508,7 +455,7 @@ class ConsumptionGoodFirm(Agent):
         self.net_worth += self.profits - self.investment_cost
         #self.debt = 0
         if self.net_worth > 0:
-             self.credit_rationed = False
+            self.credit_rationed = False
         self.order_reduced = 0
         #print("production made ", self.production_made, "price", self.price, "sales ", self.sales, "real demand ", self.real_demand, "unfilled demand", self.unfilled_demand, "market share ", self.market_share, "profits", self.profits, "net worth", self.net_worth)
         #print("net worth:", self.net_worth)
@@ -528,8 +475,8 @@ class ConsumptionGoodFirm(Agent):
             #self.quantity_ordered =  self.quantity_ordered * ( 1 - shock)
             for vintage in self.capital_vintage:
                         vintage.amount = round( (1 - shock) * vintage.amount)
-                        if vintage.amount <= 0:    
-                            self.capital_vintage.remove(vintage)
+                        if vintage.amount <= 0:
+                             self.capital_vintage.remove(vintage)
         
         ##-- If I did an order --##
         if self.supplier_id != None and self.quantity_ordered > 0 :
@@ -683,7 +630,7 @@ class ConsumptionGoodFirm(Agent):
         #print('flood')
         if self.region == 0 and int(self.model.schedule.time) == self.model.shock_time:
             self.flooded = True
-           # print('flood cons')
+            #print('flood cons')
 
             #if self.model.S > 0:
             #climate_shock = self.model.datacollector.model_vars['Climate_shock'][int(self.model.schedule.time)] +(self.model.s /10)
@@ -700,7 +647,7 @@ class ConsumptionGoodFirm(Agent):
     def migrate(self):
         
         ##----stocastic barrier to migration --##
-        #if  bernoulli.rvs(self.migration_pr) == 1:
+        if  bernoulli.rvs(self.migration_pr) == 1:
             r = self.region
             #demand = [self.regional_demand[0] + self.regional_demand[2], self.regional_demand[1]]
             demand = self.regional_demand
@@ -709,11 +656,11 @@ class ConsumptionGoodFirm(Agent):
                  demand_distance = (demand[r] - demand[1-r]) /  demand[r]
             
             ##--calculation of migration probability and process, modules ---> migration --##
-            mp  = migration.firms_migration_probability( demand_distance, self.region, self.wage,  self.model) # self.distances_mig)
+                 mp  = migration.firms_migration_probability( demand_distance, self.region,   self.model) # self.distances_mig)
             #print("mp is", mp
             #self.region_history.append([mp, r])
-            if mp > 0:
-               self.region, self.employees_IDs, self.net_worth, self.wage = migration.firm_migrate(mp, self.model, self.region, self.unique_id, self.employees_IDs, self.net_worth, self.wage, self.capital_vintage)
+                 if mp > 0:
+                    self.region, self.employees_IDs, self.net_worth, self.wage = migration.firm_migrate(mp, self.model, self.region, self.unique_id, self.employees_IDs, self.net_worth, self.wage, self.capital_vintage)
         
         #if self.lifecycle < 10:# and self.unique_id % 10 != 0:
             #demand =  self.model.datacollector.model_vars["Regional_profits_cons"][int(self.model.schedule.time)]
@@ -728,7 +675,7 @@ class ConsumptionGoodFirm(Agent):
     def stage0(self):
      #   if self.model.schedule.time > self.migration_start:
         #
-        if self.lifecycle > 20:
+        if self.lifecycle > 16:
                 self.migrate()
         
         if  self.model.S > 0:

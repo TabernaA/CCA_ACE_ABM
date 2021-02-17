@@ -3,7 +3,7 @@
 
 from mesa import  Model
 #from mesa.time import StagedActivation
-from mesa.space import MultiGrid
+#from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
 #from mesa.batchrunner import BatchRunner
 #import random
@@ -37,8 +37,8 @@ class KSModel(Model):
         self.ids_region1 = []
         self.governments = []
         self.list_firms = []
-       # self.pr_migration_f = 0.1
-        #self.pr_migration_h = 0.15
+        self.pr_migration_f = 0.1
+        self.pr_migration_h = 0.15
         
 
 
@@ -208,17 +208,24 @@ class KSModel(Model):
                 "LD_cap" : ld_cap,
                 "LD_cons" : ld_cons
                 #"MS_track" : ms_region
-            },
-            agent_reporters={"Net worth": lambda x: x.net_worth if x.type == "Cons" else None, 
+            }
+            ,
+            
+            
+            
+            
+    
+            agent_reporters={"Net worth": "net_worth", 
                              'Size' :     lambda x: len(x.employees_IDs) if  x.type == "Cons" else None,
                              'Vintage':   lambda x: len(x.capital_vintage) if  x.type == "Cons" else None,
-                             'Price':     lambda x: x.price if  x.type == "Cons" else None,
-                             'Wage':      lambda x: x.wage if  x.type == "Cons" else None,
-                             'Prod':      lambda x: x.productivity if  x.type == "Cons" else None,
-                             'Ms':        lambda x: x.market_share if  x.type == "Cons" else None,
+                             'Price':     'price',
+                             'Wage':       'wage',
+                             'Prod':     'productivity',
+                            # 'Ms':        'market_share',
                              'Region':    lambda x: x.region if  x.type == "Cons" else None,
                              'Lifecycle': lambda x: x.lifecycle if  x.type == "Cons" else None}
-        )
+        
+             )
 
         self.datacollector.collect(self)
 

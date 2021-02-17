@@ -64,7 +64,7 @@ class CapitalGoodFirm(Agent):
         #Migration tracking
         self.distances_mig = []
         self.region_history = []
-      #  self.migration_pr =  self.model.pr_migration_f
+        self.migration_pr =  self.model.pr_migration_f
         self.pre_shock_prod = 0
         
         # climate change #
@@ -130,8 +130,7 @@ class CapitalGoodFirm(Agent):
 
        # if bernoulli.rvs(p) == 1:
         # new machine productivity (A) from innovation
-          # a_1 =   a * ( 1 +   random.uniform(0, 0.1) - 0.05)
-           a_1 = (1 + x_low + beta.rvs(a,b)*(x_up-x_low)) 
+           a_1 = (1 + x_low + beta.rvs(a,b)*(x_up-x_low))
            in_productivity[0] = prod[1] * a_1
         #print(a)
         
@@ -198,7 +197,7 @@ class CapitalGoodFirm(Agent):
             #print('restored now', self.productivity[1])
         self.previous_productivity = self.productivity
        # print(' previous prod', self.previous_productivity)
-      #  if self.flooded == True:
+       # if self.flooded == True:
             # print(' previous prod', self.previous_productivity)
         self.productivity_list.append([ self.productivity[0], in_productivity[0], im_productivity[0]])
         self.productivity[0] = round(max(self.productivity[0], in_productivity[0], im_productivity[0], 1), 3)
@@ -306,7 +305,11 @@ class CapitalGoodFirm(Agent):
         r = self.region
         client_IDs = self.model.datacollector.model_vars['Cons_regional_IDs'][int(self.model.schedule.time)]
         client_regional_IDs = client_IDs[r]
+        len_regional = len(client_regional_IDs)
         client_export_IDs = client_IDs[1 - r]
+        len_exp = len(client_export_IDs)
+        new_export_clients = []
+        new_regional_clients = []
         
         
         
@@ -317,23 +320,27 @@ class CapitalGoodFirm(Agent):
         ##---pick some new random client from both regions (more likely from the same region ) --##
         if len(self.client_IDs) > 0:
             new_clients = min(1, len(self.client_IDs)//5)
-            for i in range(new_clients):
-                if random.uniform(0,1) < 0.7 and len(client_regional_IDs) > 0:
-                    new_regional_client = random.sample(client_regional_IDs, 1)
-                    if len(new_regional_client) > 1:  
-                        new_regional_client += random.sample(client_regional_IDs, 1)
-                    if new_regional_client not in self.client_IDs:
-                            self.client_IDs += new_regional_client
-                        
+            number_regional_client = min( len_regional , round(new_clients * 0.75))
+            number_external_client =  min( len_exp , new_clients - number_regional_client)
+            if number_regional_client > 0:
+                new_regional_clients = random.sample(client_regional_IDs, number_regional_client)
+
+            if number_external_client > 0:
+                new_export_clients = random.sample(client_export_IDs, number_external_client)
                 
-                    #print("my new regional clients is ", new_regional_client)
-                else:
-                    if len(client_export_IDs) > 0:
-                        new_export_client = random.sample(client_export_IDs, 1)
-                        if len(new_export_client)> 1:
-                            new_export_client += random.sample(client_export_IDs, 1)
-                        if new_export_client not in self.client_IDs:
-                            self.client_IDs += new_export_client
+            all_clients = new_regional_clients + new_export_clients
+            new_clients =  set(all_clients) - set(self.client_IDs)
+            self.client_IDs += list(new_clients)
+            
+            for firm_id in self.client_IDs:
+                #if firm_id in self.model.ids_firms2:
+                    #print(firm_id)
+                client = self.model.schedule.agents[firm_id]
+                if client.region == self.region:
+                    client.offers.append(self.brochure_regional)        #regional client 
+                elif client.region == 1 - r :
+                    client.offers.append(self.brochure_export)   
+
                    # print("my new export clients are ", new_export_client)
             #print(" Hi I am firms", self.unique_id, "my new clients are ", self.client_IDs)
                
@@ -342,41 +349,22 @@ class CapitalGoodFirm(Agent):
        
         ##----pick clients, first step or new entry firms --##
         if len(self.client_IDs) == 0:
-            initial_clients = round(self.model.num_firms2 / 40)    
-            for i in range(initial_clients):
-                if random.uniform(0,1) < 0.7 and len(client_regional_IDs) > 0:
-                    regional_client = random.sample(client_regional_IDs, 1)
-                    if len(regional_client) > 1:  
-                        regional_client += random.sample(client_regional_IDs, 1)
-                    self.client_IDs += regional_client
-                    #print("my regional clients are ", regional_client)
-                else:
-                    if len(client_export_IDs) > 0:
-                        export_client = random.sample(client_export_IDs, 1)
-                        if len(export_client)> 1:
-                            export_client += random.sample(client_export_IDs, 1)
-                        self.client_IDs += export_client
-                   # print("my export clients are ", export_client)
-            ##print(" Hi I am firms", self.unique_id, "my number of initial clients are ", initial_clients)
-               
+            initial_clients = round(self.model.num_firms2 / 40)
+            number_regional_client = min( len_regional , round(initial_clients * 0.75))
+            number_external_client =  min( len_exp , initial_clients - number_regional_client)
             
-            #print("so my initial clients are ", self.client_IDs )
-                
-            
-            # bounded rationality: randomly selec
-        #t half of the firms
+            if number_regional_client > 0:
+                new_regional_clients = random.sample(client_regional_IDs, number_regional_client)
 
-    
+            if number_external_client > 0:
+                new_export_clients = random.sample(client_export_IDs, number_external_client)
+                
+            all_clients = new_regional_clients + new_export_clients
+            self.client_IDs = all_clients
+            
         ##-- send brochure to my chosen firms --##
-        if len(self.client_IDs) > 0:
-            for firm_id in self.client_IDs:
-                #if firm_id in self.model.ids_firms2:
-                    #print(firm_id)
-                client = self.model.schedule.agents[firm_id]
-                if client.region == self.region:
-                    client.offers.append(self.brochure_regional)        #regional client 
-                elif client.region == 1 - r :
-                    client.offers.append(self.brochure_export)          #export client
+    
+       #export client
 
         # note: return two lists of ids, one for local and one for export?
         return self.client_IDs
@@ -493,7 +481,7 @@ class CapitalGoodFirm(Agent):
     def climate_damages(self):
         self.flooded = False
         if self.region == 0 and int(self.model.schedule.time) == self.model.shock_time:
-            #print('flood cap')
+            #print('flood')
             self.flooded = True
             #climate_shock = self.model.datacollector.model_vars['Climate_shock'][int(self.model.schedule.time)] +(self.model.s /10)
            # print("I am firm ", self.unique_id, "my capital vintage pre shock is ", self.capital_vintage)
@@ -507,7 +495,7 @@ class CapitalGoodFirm(Agent):
     '''
     def migrate(self):
         ##-- stochastic entry barrier to migration process --##
-      #  if bernoulli.rvs(self.migration_pr) == 1 and self.lifecycle > 4:
+       if bernoulli.rvs(self.migration_pr) == 1:
         #if self.unique_id % 10 != 0:
            
            # unemployment_subsidy = self.model.datacollector.model_vars["Regional_unemployment_subsidy"][int(self.model.schedule.time)]
@@ -516,7 +504,7 @@ class CapitalGoodFirm(Agent):
             if demand[1] >= demand[0]:
                demand_distance = ( demand[0] - demand[1]) / (demand[0] + 0.001)
             
-               mp = migration.firms_migration_probability( demand_distance, self.region, self.wage,  self.model)
+               mp = migration.firms_migration_probability( demand_distance, self.region,  self.model)
                if mp> 0:
                    self.region, self.employees_IDs, self.net_worth, self.wage = migration.firm_migrate(mp, self.model, self.region, self.unique_id, self.employees_IDs, self.net_worth, self.wage, 0)
 
@@ -527,7 +515,7 @@ class CapitalGoodFirm(Agent):
         #print('cap')
        # if self.region == 0:
         #    self.CCA_RD()
-        if self.lifecycle > 20:
+        if self.lifecycle > 16:
          #   if self.model.schedule.time > 80:
                 self.migrate()
             #print(self.region, self.productivity)

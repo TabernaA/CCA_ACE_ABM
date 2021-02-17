@@ -9,7 +9,7 @@ hire_and_fire()  : for firms
 '''
 import random
 import math
-#import numpy as np
+import numpy as np
 
 
 ''' Labor Search:

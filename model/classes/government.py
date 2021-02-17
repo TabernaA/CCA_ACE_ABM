@@ -257,15 +257,15 @@ class Government (Agent):
                     r = firm_cap.region
                     #regional_inv =  self.model.datacollector.model_vars["INVESTMENT"][int(self.model.schedule.time)]
                     regional_wage =  self.salaries_cap
-                    firm_cap.wage = regional_wage[r] #* 1.1
+                    firm_cap.wage =  regional_wage[r]# * 1.1
                     #average_regional_prof =  self.model.datacollector.model_vars["Regional_profits_cons"][int(self.model.schedule.time)]
                     average_regional_NW = self.model.datacollector.model_vars["Regional_average_NW"][int(self.model.schedule.time)]
                     
                     firm_cap.net_worth = average_regional_NW[r] * 0.6
                     #inv_distance = (regional_inv[r] - regional_inv[1 - r]) /  max(regional_inv)
-                    inv_distance =  self.model.datacollector.model_vars["INVESTMENT"][int(self.model.schedule.time)][r + 3]
+                    inv_distance = 0 #  self.model.datacollector.model_vars["INVESTMENT"][int(self.model.schedule.time)][r + 3]
                     
-                    mp = migration.firms_migration_probability( inv_distance, r, regional_wage[r], self.model )
+                    mp = migration.firms_migration_probability( inv_distance, r, self.model, w_1 = 0, w_2 = 1  )
                     #firm_cap.region_history.append([mp, r])
                     firm_cap.region, firm_cap.employees_IDs, firm_cap.net_worth ,  firm_cap.wage= migration.firm_migrate(mp, firm_cap.model, r, firm_cap.unique_id, firm_cap.employees_IDs, firm_cap.net_worth, regional_wage[r],0)
                    
@@ -341,7 +341,7 @@ class Government (Agent):
     
                     #average_regional_cons_prof =  self.model.datacollector.model_vars["Regional_profits_cons"][int(self.model.schedule.time)]
                    # current_average_price =  self.model.datacollector.model_vars["Cosumption_price_average"][int(self.model.schedule.time)]
-                    average_regional_cons=  self.aggregate_cons 
+                  #  average_regional_cons=  self.aggregate_cons 
                     
                     firm.net_worth = average_regional_NW[r] * 0.5
                     firm.credit_rationed = False
@@ -349,10 +349,10 @@ class Government (Agent):
                     
                     ###---location of the firm  ---###
                     #cons_distance = (average_regional_cons[r] - average_regional_cons[1 - r]) /  max(average_regional_cons)
-                    cons_distance =   average_regional_cons[3 + r]
+                    cons_distance =   0 #average_regional_cons[3 + r]
                     
                     
-                    mp = migration.firms_migration_probability( cons_distance, r, regional_wage[r], firm.model)
+                    mp = migration.firms_migration_probability( cons_distance, r, firm.model , w_1 = 0, w_2 = 1)
                     #print("mp is", mp
                     #firm.region_history.append([mp, r])
                     firm.region, firm.employees_IDs, firm.net_worth,  firm.wage = migration.firm_migrate(mp, firm.model, r, firm.unique_id, firm.employees_IDs, firm.net_worth, regional_wage[r], 0) 
@@ -396,7 +396,7 @@ class Government (Agent):
                     firm.unfilled_demand = 0
                     firm.invetories = 0
                     firm.offers = []
-                    firm.wage = regional_wage[r]# * 1.1
+                    firm.wage = regional_wage[r] #* 1.1
                     firm.order_reduced = 0
                     #firm.investment_cost = 0
                     firm.market_share_history = []
@@ -405,7 +405,7 @@ class Government (Agent):
                     
                     
                     firm.lifecycle = -1
-                    print("new entri cons!", firm.unique_id)
+                   # print("new entri cons!", firm.unique_id)
         
         
         
@@ -467,8 +467,8 @@ class Government (Agent):
                 shock = self.model.S 
                 C0 = (1 - shock) * C0
         
-        cons_diffrence0, cons_diffrence1 = self.variable_difference(C0, C1, True)    
-        self.aggregate_cons = [round(C0, 3), round(C1, 3), C0+C1, cons_diffrence0, cons_diffrence1 , export_demand] #,  old_exp_C * ( 1 + constant_g)]
+       # cons_diffrence0, cons_diffrence1 = self.variable_difference(C0, C1, True)    
+        self.aggregate_cons = [round(C0, 3), round(C1, 3), C0+C1,  export_demand] #,  old_exp_C * ( 1 + constant_g)]
         
         
         
@@ -648,8 +648,6 @@ class Government (Agent):
         
         prod_increase_0 = round( (av_prod0 - productivity0_old)/ productivity0_old, 3)
         prod_increase_1 = round( (av_prod1 - productivity1_old)/ productivity1_old , 3)
-        
-        
         
         return [av_prod0, av_prod1,  prod_increase_0, prod_increase_1 ]
         

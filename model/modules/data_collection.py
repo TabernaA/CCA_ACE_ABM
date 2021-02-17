@@ -78,29 +78,13 @@ def regional_unemployment_rate(model):
     if int(model.schedule.time) > 0:
         unemployment_rate_0_old = model.datacollector.model_vars['Unemployment_Regional'][int(model.schedule.time) - 1][0]
         unemployment_rate_1_old = model.datacollector.model_vars['Unemployment_Regional'][int(model.schedule.time) - 1][1]
-    else: 
-        unemployment_rate_0_old = 1
-        unemployment_rate_1_old = 1
-    
-    if (unemployment_rate_0 or unemployment_rate_0_old)  < 0.01:
-        delta_unemployment_0 = 0
-    else:
-            
-        delta_unemployment_0 =  max( -0.025, min( 0.025 ,( unemployment_rate_0 - unemployment_rate_0_old) / max(unemployment_rate_0, unemployment_rate_0_old)))
-        
-    if (unemployment_rate_1 or unemployment_rate_1_old)  < 0.01:
-        delta_unemployment_1 = 0
-    else:
-            
-        delta_unemployment_1 =  max( -0.025, min( 0.025 ,( unemployment_rate_1 - unemployment_rate_1_old) / max(unemployment_rate_1, unemployment_rate_1_old)))
+@ -96,11 +284,49 @@ def regional_unemployment_rate(model):
      
     unemployment_diffrence0 = unemployment_rate[2]
     unemployment_diffrence1 = unemployment_rate[3]
     '''
     
     return   unemployment_rate 
-
-
 
 
 def regional_aggregate_market_share(model):
