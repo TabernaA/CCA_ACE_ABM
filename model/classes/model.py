@@ -1,10 +1,16 @@
 # model/classes/model.py
 # A MESA Model class, KSModel
+seed_value = 12345678
 
+import random
+random.seed(seed_value)
+import numpy as np
+np.random.seed(seed=seed_value)
 from mesa import  Model
 #from mesa.time import StagedActivation
 #from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
+#from model.modules.datacollection import DataCollector
 #from mesa.batchrunner import BatchRunner
 #import random
 from model.classes.schedule import StagedActivationByType
@@ -17,7 +23,7 @@ from model.modules.data_collection_2 import *
 
 #   def __init__(self, F1 = 5, F2= 10, H= 10, B= 1, T= 0.02, S = 0.1, width=1, height=2):
 class KSModel(Model):
-    def __init__(self, F1, F2, H, B, T, S, width=1, height=2):
+    def __init__(self, F1= 50, F2= 250, H= 3500, B= 1, T= 2, S=0, width=1, height=2):
         self.num_firms1 = F1
         self.num_firms2 = F2
         self.num_households = H
@@ -37,8 +43,8 @@ class KSModel(Model):
         self.ids_region1 = []
         self.governments = []
         self.list_firms = []
-        self.pr_migration_f = 0.1
-        self.pr_migration_h = 0.15
+       # self.pr_migration_f = 0.1
+       # self.pr_migration_h = 0.15
         
 
 
@@ -59,13 +65,13 @@ class KSModel(Model):
        # self.start_migration = 30
         self.debt_sales_ratio = 2
         self.interest_rate = 0.01
-        self.S = S
+        self.S = S /10
         self.shock_time = 150
 
 
         # transport cost for [region0, region1]
-        self.transport_cost = T 
-        self.transport_cost_RoW =  2 * T
+        self.transport_cost = T /100
+        self.transport_cost_RoW =  2 * T/100
 
 
         for i in range(self.num_agents):
@@ -143,6 +149,7 @@ class KSModel(Model):
 
         # data collection
         self.datacollector = DataCollector(
+
             model_reporters = {
                 #"Productivity_A1" : productivity_a1, # machine productivity in sector 1
                 #"Productivity_B1" : productivity_b1,  # labor productivity in sector 1
@@ -205,27 +212,22 @@ class KSModel(Model):
                  "CONSUMPTION" : consumption,
                 # 'Sales_firms' : sales_firms
                # "Market_share_normalized" : market_share_normalized,
-                "LD_cap" : ld_cap,
-                "LD_cons" : ld_cons
+                #"LD_cap" : ld_cap,
+                #"LD_cons" : ld_cons,
+                "Debt" : debt,
+                'GDP total' : gdp_SA,
+                'Price total': price_SA,
+                'INVESTMENT total' : investment_SA,
+                'CONSUMPTION total' : consumption_SA,
+                'Unemployment total' : regional_unemployment_rate_SA,
+                 "Population_Region_0_Households" :regional_population_households_region_0,
+                 "Population_Region_0_Cons_Firms":regional_population_cons_region_0
                 #"MS_track" : ms_region
             }
-            ,
-            
-            
-            
-            
-    
-            agent_reporters={"Net worth": "net_worth", 
-                             'Size' :     lambda x: len(x.employees_IDs) if  x.type == "Cons" else None,
-                             'Vintage':   lambda x: len(x.capital_vintage) if  x.type == "Cons" else None,
-                             'Price':     'price',
-                             'Wage':       'wage',
-                             'Prod':     'productivity',
-                            # 'Ms':        'market_share',
-                             'Region':    lambda x: x.region if  x.type == "Cons" else None,
-                             'Lifecycle': lambda x: x.lifecycle if  x.type == "Cons" else None}
-        
+
+
              )
+
 
         self.datacollector.collect(self)
 
@@ -234,3 +236,15 @@ class KSModel(Model):
         self.datacollector.collect(self)
         #self.list_firms.append(self.firms_1_2)
         
+            
+        '''
+        agent_reporters={"Net worth": "net_worth", 
+                             'Size' :     lambda x: len(x.employees_IDs) if  x.type == "Cons" else None,
+                             'Vintage':   lambda x: len(x.capital_vintage) if  x.type == "Cons" else None,
+                             'Price':     'price',
+                             'Wage':       'wage',
+                             'Prod':     'productivity',
+                            # 'Ms':        'market_share',
+                             'Region':    lambda x: x.region if  x.type == "Cons" else None,
+                             'Lifecycle': lambda x: x.lifecycle if  x.type == "Cons" else None}
+        '''

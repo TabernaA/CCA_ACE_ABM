@@ -4,7 +4,11 @@ model/classes/capital_good-firm
 A MESA Agent class for capital good firms (sector 1)
 
 ''' 
-
+seed_value = 12345678
+import random
+random.seed(seed_value)
+import numpy as np
+np.random.seed(seed=seed_value)
 from mesa import Agent
 
 from model.modules import research_and_development as rd
@@ -13,8 +17,9 @@ from model.modules import labor_dynamics as ld
 from model.modules import migration as migration
 #from scipy.stats import bernoulli
 import math
-import random
+\
 import bisect
+#import numpy as np
 
 from scipy.stats import bernoulli
 from scipy.stats import beta
@@ -60,11 +65,12 @@ class CapitalGoodFirm(Agent):
         self.IM = 0
         self.IN = 0
         self.productivity_list = []
+        self.bankrupt = None
         
         #Migration tracking
         self.distances_mig = []
         self.region_history = []
-        self.migration_pr =  self.model.pr_migration_f
+       # self.migration_pr =  self.model.pr_migration_f
         self.pre_shock_prod = 0
         
         # climate change #
@@ -255,9 +261,7 @@ class CapitalGoodFirm(Agent):
    # NOT USED AT THE MOMENT, different procedure for wage calculation 
  
     def wage_determination(self):
-        if (self.model.schedule.time < 2):
-            return #random.randint(5,15)        #initial value
-        else:
+
 
             r = self.region
             gov = self.model.governments[0]
@@ -294,6 +298,7 @@ class CapitalGoodFirm(Agent):
     '''
     def advertise(self):
         trade_cost = self.model.transport_cost
+        #print(trade_cost)
         self.regional_orders = []
         self.export_orders = []
 
@@ -332,14 +337,7 @@ class CapitalGoodFirm(Agent):
             new_clients =  set(all_clients) - set(self.client_IDs)
             self.client_IDs += list(new_clients)
             
-            for firm_id in self.client_IDs:
-                #if firm_id in self.model.ids_firms2:
-                    #print(firm_id)
-                client = self.model.schedule.agents[firm_id]
-                if client.region == self.region:
-                    client.offers.append(self.brochure_regional)        #regional client 
-                elif client.region == 1 - r :
-                    client.offers.append(self.brochure_export)   
+ 
 
                    # print("my new export clients are ", new_export_client)
             #print(" Hi I am firms", self.unique_id, "my new clients are ", self.client_IDs)
@@ -365,6 +363,15 @@ class CapitalGoodFirm(Agent):
         ##-- send brochure to my chosen firms --##
     
        #export client
+       
+        for firm_id in self.client_IDs:
+                #if firm_id in self.model.ids_firms2:
+                    #print(firm_id)
+                client = self.model.schedule.agents[firm_id]
+                if client.region == self.region:
+                    client.offers.append(self.brochure_regional)        #regional client 
+                elif client.region == 1 - r :
+                    client.offers.append(self.brochure_export)  
 
         # note: return two lists of ids, one for local and one for export?
         return self.client_IDs
@@ -495,7 +502,8 @@ class CapitalGoodFirm(Agent):
     '''
     def migrate(self):
         ##-- stochastic entry barrier to migration process --##
-       if bernoulli.rvs(self.migration_pr) == 1:
+       
+        if bernoulli.rvs(0.25) == 1:
         #if self.unique_id % 10 != 0:
            
            # unemployment_subsidy = self.model.datacollector.model_vars["Regional_unemployment_subsidy"][int(self.model.schedule.time)]

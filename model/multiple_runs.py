@@ -1,7 +1,11 @@
 # model/app.py
 # bringing all elements of the model together
 # contains run method
-
+seed_value = 1
+import random
+random.seed(seed_value)
+import numpy as np
+np.random.seed(seed=seed_value)
 #from model.classes.capital_good_firm import CapitalGoodFirm
 #from model.classes.consumption_good_firm import ConsumptionGoodFirm
 #from model.classes.household import Household
@@ -13,28 +17,28 @@ import matplotlib.pyplot as plt
 import model.modules.additional_functions as af
 #import random
 import seaborn as sns
-import numpy as np
+#import numpy as np
 import pandas as pd   
 
 
 
-
-runs= 80
-steps = 300
+runs= 50
+steps =  400
 macro_variables = []
 micro_variables = []
 model_lists = []
 for i in range(runs):
-    
-    model = KSModel(F1 = 50, F2 =250, H = 3500, B= 1,  T= 0.04, S = 0)
-    model.reset_randomizer(i + 10)
+    random.seed(i)
+    np.random.seed(i)
+    model = KSModel(F1 = 50, F2 =250, H = 3500, B= 1,  T= 3, S = 5)
+    model.reset_randomizer(i )
     print("#-------------- iteration", i+1, "---------------#")
     for j in range(steps):
         #print("#------------ step", j+1, "------------#")
         model.step()
     run_data = model.datacollector.get_model_vars_dataframe()
-   # micro_data = model.datacollector.get_agent_vars_dataframe()
-    #micro_data = micro_data.dropna()
+    micro_data = model.datacollector.get_agent_vars_dataframe()
+    micro_data = micro_data.dropna()
     #model_lists.append(model)
     '''
     ### PLOT ##
@@ -55,8 +59,8 @@ for i in range(runs):
     '''
     ## TRANSOFOR MICRO ##
     #micro_data[['Prod 0','Prod 1']] = pd.DataFrame(micro_data.Prod.to_list(), index= micro_data.index)
-    #micro_data[['MS 0','MS 1', 'MS Exp']] = pd.DataFrame(micro_data.Ms.to_list(), index= micro_data.index)
-    #micro_variables.append(micro_data)
+   # micro_data[['MS 0','MS 1', 'MS Exp']] = pd.DataFrame(micro_data.Ms.to_list(), index= micro_data.index)
+    micro_variables.append(micro_data)
     
     ## TRANSFORM MACRO##
     
@@ -71,7 +75,7 @@ for i in range(runs):
    # macro_variable[['Prod cons region 0','Prod cons region 1', 'Delta prod cons region 0', 'Delta prod cons region 1']] = pd.DataFrame(macro_variable.Consumption_firms_av_prod.to_list(), index= macro_variable.index)
     macro_variable[['Prod region 0','Prod region 1', 'Delta prod region 0', 'Delta prod region 1' ]] = pd.DataFrame(macro_variable.Regional_average_productivity.to_list(), index= macro_variable.index)    
     macro_variable[['GDP region 0','GDP region 1', 'GDP total']] = pd.DataFrame(macro_variable.GDP.to_list(), index= macro_variable.index)
-    macro_variable[['Unemployment region 0','Unemployment region 1', 'Unemployment diff 0','Unemployment diff 1' ]] = pd.DataFrame(macro_variable.Unemployment_Regional.to_list(), index= macro_variable.index)
+    macro_variable[['Unemployment region 0','Unemployment region 1', 'Unemployment diff 0','Unemployment diff 1','Unemployment total' ]] = pd.DataFrame(macro_variable.Unemployment_Regional.to_list(), index= macro_variable.index)
 #macro_variable[['MS track 0', 'MS track 1']] = pd.DataFrame(mac 7V'CONS difference 1']] = pd.DataFrame(macro_variable.CONSUMPTION.to_list(), index= macro_variable.index)
     macro_variable[['CONS 0', 'CONS 1', 'CONS Total', 'Export']] = pd.DataFrame(macro_variable.CONSUMPTION.to_list(), index= macro_variable.index)
     macro_variable[['INV 0', 'INV 1', 'INV Total']] = pd.DataFrame(macro_variable.INVESTMENT.to_list(), index= macro_variable.index)
@@ -88,15 +92,128 @@ for i in range(runs):
 #df_multiple_runs = pd.DataFrame(macro_variables) 
 
 
+result_0 = pd.concat(macro_variables, axis = 1 , copy = False)
 
 
+## NEXT WITH prob shock
 result_1 = pd.concat(macro_variables, axis = 1 , copy = False)
 micro_result_1 = pd.concat(micro_variables, axis = 1)
+
+'''
+MICRO ANALYSIS
+'''
+'''
+import os
+from fbprophet import Prophet
+
+macro_variable['Date'] = macro_variable.index+ 1
+macro_variable['Date'] = pd.to_datetime(macro_variable['Date'], format= '%Y')
+df = macro_variable[['Date', 'GDP total']]
+jh = df.rename(columns={'Date': 'ds', 'GDP total': 'y'})
+jh_model = Prophet(interval_width=0.95)
+jh_model.fit(jh)
+jh_forecast = jh_model.make_future_dataframe(periods=36, freq='MS')
+jh_forecast = jh_model.predict(jh_forecast)
+plt.figure(figsize=(18, 6))
+jh_model.plot(jh_forecast, xlabel = 'Date', ylabel = 'PTS')
+plt.title('James Harden Points')
+
+
+
+
+df =  macro_variable[['GDP total', macro_variable.index]]
+
+
+
+bankruptcy =  micro_result_1.loc[(micro_result_1['Bankrupt'] > 0)]
+
+
+
+sns.distplot(mv["Bankrupt"], bins=4)
+mv =  bankruptcy.loc[(bankruptcy.index.get_level_values('Step') > 150) & (bankruptcy.index.get_level_values('Step') < 180)]
+mv['Size'] = mv['Bankrupt']
+mv['Firms'] = 1
+a = mv.groupby(by="Size").count()
+total = 13
+a['Firms'] = a['Firms'] /13
+sns.barplot(x = a.index,  y = "Firms",   color = 'cyan' , data = a)
+'''
+
+'''
+x1 = list(mv[mv['Size'] ==  2]['Size'])
+x2 = list(mv[mv['Size'] ==  3]['Size'])
+x3 = list(mv[mv['Size'] ==  4]['Size'])
+x4 = list(mv[mv['Size'] ==  6]['Size'])
+x5 = list(mv[mv['Size'] ==  8]['Size'])
+
+# Assign colors for each airline and the names
+colors = ['#E69F00', '#E69F00','#E69F00', '#E69F00', '#E69F00']
+names = ['2', '3', '4',
+         '6', '8']
+         
+# Make the histogram using a list of lists
+# Normalize the flights and assign colors and names
+
+
+plt.hist([x1, x2, x3, x4, x5], bins = int(6), stacked=True, color = colors)
+# Plot formatting
+plt.legend()
+plt.xlabel('Size')
+plt.ylabel('Number of firms')
+plt.title('Size of firms bankrupting')
+
+mv['Size'].hist()
+
+
+
+
+sns.barplot(x ='Year post flood', y = "", data = mv)
+
+mv.loc[ mv.index.get_level_values(0) > 150, 'Step'] = 1
+
+sns.barplot(x ='Year post flood', y = "", data = mv)
+plt.show()
+mv['Bankrupt av'] = mv['Bankrupt'] / 5 
+mv['Bankrupt av'].hist()
+mv= mv.loc[(mv.index.get_level_values('Step') < 180)]
+
+
+
+ 
+
+bankruptcy =  micro_result_1.loc[(micro_result_1['Bankrupt'] > 0)]
+bankruptcy = bankruptcy.loc[140:, ]bankruptcy
+
+sns.distplot(mv["Bankrupt"], bins=4)
+mv = bankruptcy.loc[(bankruptcy.index.get_level_values('Step') > 150) & (bankruptcy.index.get_level_values('Step') < 170)] 
+mv.drop(mv['AgentID'])
+mv.loc[ mv.index.get_level_values(0) > 150, 'Step'] = 1
+
+
+plt.show()
+mv['Bankrupt av'] = mv['Bankrupt'] / 5 
+mv['Bankrupt av'].hist()
+mv= mv.loc[(mv.index.get_level_values('Step') < 180)]
+mv['Year post flood'] = (mv.index.get_level_values('Step') - 150) // 4
+mv['Firms'] = 1 
+
+
+sns.barplot(x = a.index.get_level_values('Year post flood') , y = "Firms", hue = 'Bankrupt', data =  a)
+plt.show()= mv.groupby(by="Year post flood").sum()
+sns.barplot(x = a.index.get_level_values('Year post flood') , y = "Firms", hue = 'Bankrupt', data =  a)
+plt.show()
+'''
+
+
 transition = 15
-#result_1.to_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\test.csv')         
+#result_1.to_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\T002_S01_100RUNSb.csv')         
 inv_gr_0 = af.variable_growth_rate(result_1, 'INV 0', transition, steps)
 inv_gr_1 = af.variable_growth_rate(result_1, 'INV 1', transition, steps)
 #steps = 150
+
+
+
+
 
 '''
 GDP 
@@ -196,7 +313,7 @@ BANDPASS FILTER
 '''
 import statsmodels.api as sm
 
-result_1 = macro_variables[50]
+#result_1 = macro_variables[50]
 
 gdp = af.mean_variable_log(result_1, 'GDP total',100)
 inv = af.mean_variable_log(result_1, 'INV Total', 100)
@@ -247,34 +364,136 @@ FLOOD ANALYSIS
 
 
 ## ---FLOOD --- ##
-df_s_050a = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\30runs_T003_S05.csv')
-df_s_050b = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\10runs_T003_S05.csv')
-df_s_025a = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\30runs_T003_S025.csv')
-df_s_025b = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\10runs_T003_S025.csv')
-df_s_010a =  pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\Migration_beginning\model\data_results\multiple_runs_T002_S01a__shuffle_hor.csv')
-df_s_010b =  pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\Migration_beginning\model\data_results\multiple_runs_T002_S01b__shuffle_hor.csv')
-#df_s_025b.merge(df_s_025a)  
-df_s_025 = pd.concat([df_s_025a, df_s_025b], axis = 1)
+df_s_0f = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S0_T002_1100RUNS_500steps.csv', skiprows=2) #
+df_s_0b = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S00_T002_100RUNS_500steps.csv', skiprows=2)
+df_s_0a = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S00_T002_150RUNS_500steps.csv', skiprows=2) 
+df_s_0c = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S0_T002_100RUNS_500steps_b.csv', skiprows=2)
+df_s_0e = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S0_T002_150RUNS_500steps_b.csv', skiprows=2) ## bad (not sure, maybe was the first one need to check)
+df_s_0d = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S00_T002_100RUNS_500steps_c.csv', skiprows=2) ## bad
+df_s_050d = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S05_T002_100RUNS_500steps.csv', skiprows=2)
+df_s_050c = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S05_T002_100RUNS_500steps_c.csv', skiprows=2)
+df_s_050a = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S05_T002_150RUNS_500steps.csv', skiprows=2)
+df_s_050b = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S05_T002_500RUNS_500steps_b.csv', skiprows=2)
+df_s_050e = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S05_T002_500RUNS_500steps_c.csv', skiprows=2)
+#df_s_025a = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\30runs_T003_S025.csv')
+#df_s_025b = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\10runs_T003_S025.csv')
+df_s_010 = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S01_T002_1000RUNS_500steps.csv', skiprows=2)
+#df_s_010b =  pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\T002_S01_100RUNSb.csv')
+#df_s_025b.merge(df_s_025a)
+df_s_030d = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S03_T002_150RUNS_500steps.csv', skiprows=2)
+df_s_030a = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S03_T002_100RUNS_500steps.csv', skiprows=2)
+df_s_030b = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S03_T002_100RUNS.csv', skiprows=2) 
+df_s_030c = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S03_T002_100RUNS_500steps_c.csv', skiprows=2)
+
+df_s_0 = pd.concat([df_s_0a,df_s_0b, df_s_0c, df_s_0d, df_s_0e], axis = 1)
 #df_s_010 = pd.concat([df_s_010a, df_s_010b], axis = 1)
-df_s_050 = pd.concat([df_s_050a, df_s_050b], axis = 1)
+df_s_050 = pd.concat([df_s_050a, df_s_050b, df_s_050c ,  df_s_050d, df_s_050e ], axis = 1) #df_s_050c], axis = 1)
+df_s_030 = pd.concat([df_s_030a, df_s_030b,df_s_030c, df_s_030d], axis = 1)
+
+f_all_050 = df_s_050.filter(like = "Population_Region_0_Cons_Firms")
+
+time_intervals = [150, 250]
+raws_50 = []
+count_values = []
+for i in time_intervals:
+    raws_50.append(f_all_050.iloc[i, :])
+    count_values.append(f_all_050.iloc[i, :].value_counts().sort_index(ascending = False)/ 1000)
+
+
+count_f_50 = pd.concat(count_values, axis = 1)
+count_f_50.columns = ['Before flood', 'After flood']
+
+count_f_50['Net after flood'] = count_f_50['After flood'] -  count_f_50['Before flood'] 
+#agl_1 = count_f_50.loc[:124,:]
+agl_1 = count_f_50.loc[:124, :].sum()
+agl_0 = count_f_50.loc[125:, :].sum()
+
+f_all_0 = df_s_0.filter(like = "Population_Region_0_Cons_Firms")
+raws_0 = []
+count_values_0 = []
+for i in time_intervals:
+    raws_0.append(f_all_0.iloc[i, :])
+    count_values_0.append(f_all_0.iloc[i, :].value_counts().sort_index(ascending = False)/ 600)
+    
+count_f_0 = pd.concat(count_values_0, axis = 1)
+agl_1_0 = count_f_0.loc[:124, :].sum()
+agl_0_0 = count_f_0.loc[125:, :].sum()
+
+
+f_all_0 = df_s_0.filter(like = "Population_Region_0_Cons_Firms")
+
+time_intervals = [150, 250]
+raws_0 = []
+count_values = []
+for i in time_intervals:
+    raws_0.append(f_all_0.iloc[i, :])
+    count_values.append(f_all_0.iloc[i, :].value_counts().sort_index(ascending = False)/ 600)
+
+
+count_f_0 = pd.concat(count_values, axis = 1)
+count_f_0.columns = ['Before flood', 'After flood']
+count_f_0['Net after flood'] = count_f_0['After flood'] -  count_f_0['Before flood'] 
+
+#agl_1_before = 
+agl_0 = count_f_50.iloc[104:, :].sum()
+
+f_all_0 = df_s_0.filter(like = "Population_Region_0_Cons_Firms")
+raws_0 = []
+count_values_0 = []
+for i in time_intervals:
+    raws_0.append(f_all_0.iloc[i, :])
+    count_values_0.append(f_all_0.iloc[i, :].value_counts().sort_index(ascending = False)/ 600)
+    
+count_f_0 = pd.concat(count_values_0, axis = 1)
+agl_0_1 = count_f_0.iloc[:1, :].sum()
+agl_0_0 = count_f_0.iloc[90:, :].sum()
+
+
+
+
+
+
+'''
+GOOD PLOTS
+
+df_s_0 = pd.concat([df_s_0a, df_s_0b, df_s_0c], axis = 1)
+#df_s_010 = pd.concat([df_s_010a, df_s_010b], axis = 1)
+#df_s_050 = pd.concat([df_s_050a, df_s_050b, result_1,  df_s_050c ], axis = 1) #df_s_050c], axis = 1)
+df_s_030 = pd.concat([df_s_030a, df_s_030b,df_s_030c], axis = 1)
+df_s_050 = pd.concat([df_s_050a, df_s_050b, df_s_050a, df_s_050e], axis = 1) #, result_1,  df_s_050c ], axis = 1) #df_s_050c], axis = 1)
+'''
+df_s_050 = pd.concat(macro_variables_S05_T003_SHOCK100, axis = 1 , copy = False)
+df_s_050.to_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\S05_T003_SHOCK100.50runs.csv')  
+df_s_050 = pd.read_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\S05_T003_SHOCK100_50runs.csv')
+df_s_0 = result_1
+df_s_0.to_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\S0_T003_50RUNS.csv')  
+df_s_0 = pd.read_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\S0_T003_50RUNS.csv')  
+
+df_s_030 =pd.read_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\S05_T003_SHOCK150_50runs.csv')
+df_s_030 = result_1
+df_s_030.to_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\S05_T003_SHOCK150_50runs.csv')  
 
 drop_firm = 0
+drop_end = 0
 
-firms_0_s050 =  af.mean_variable(df_s_050, 'Cons region 0', drop_firm) * 2
-firms_1_s050 =  af.mean_variable(df_s_050, 'Cons region 1', drop_firm) * 2
+firms_0_s050 =  af.mean_variable(df_s_050, 'Population_Region_0_Cons_Firms', drop_firm, drop_end) /250
+firms_0_s050_std =  af.std_dev_variable(df_s_050, 'Population_Region_0_Cons_Firms', drop_firm, drop_end)  / 250  / np.sqrt(800)# / 250 #* 2
+#firms_1_s050 =  af.mean_variable(df_s_050, 'Cons region 1', drop_firm) * 2
 #firms_0_s025a =  mean_variable(df_s_025a, 'Cons region 0', drop_firm)
 #firms_1_s025a =  mean_variable(df_s_025a, 'Cons region 1', drop_firm)
-firms_0_s025 =  af.mean_variable(df_s_025, 'Cons region 0', drop_firm) * 2
-firms_1_s025 =  af.mean_variable(df_s_025, 'Cons region 1', drop_firm) * 2
+firms_0_s030 =  af.mean_variable(df_s_030 , 'Population_Region_0_Cons_Firms', drop_firm, drop_end) / 250 
+firms_0_s030_std =  af.std_dev_variable(df_s_030, 'Population_Region_0_Cons_Firms', drop_firm, drop_end)  / 250  / np.sqrt(600) #* 2
+#firms_1_s025 =  af.mean_variable(df_s_025, 'Cons region 1', drop_firm) * 2
 
+firms_0_s0 =  af.mean_variable(df_s_0, "Population_Region_0_Cons_Firms", drop_firm, drop_end) / 250
+firms_0_s0_std =  af.std_dev_variable(df_s_0, 'Population_Region_0_Cons_Firms', drop_firm, drop_end)  / 250  / np.sqrt(600)
+
+#firms_0_s010 =  af.mean_variable(df_s_010, "Population_Region_0_Cons_Firms", drop_firm, drop_end) / 250
+#firms_0_s010_std =  af.std_dev_variable(df_s_010, 'Population_Region_0_Cons_Firms', drop_firm, drop_end)  / 250  / np.sqrt(1000)
 #firms_0_s025 = ( firms_0_s025a + firms_0_s025b)/ 2
-#firms_1_s025 = ( firms_1_s025a + firms_1_s025b)/ 2
-
-#firms_0_s010 =  mean_variable(df_s_010, 'Cons region 0', drop_firm) * 2
-#firms_1_s010 =  mean_variable(df_s_010, 'Cons region 1', drop_firm) * 2
 
 
-fig = plt.figure(figsize=(14,10))
+fig = plt.figure(figsize=(10,10))
 ax = fig.add_subplot(111)
 #df_gdp_1_concat.plot(ax=ax, style=['r--','b-'])
 
@@ -282,66 +501,169 @@ ax = fig.add_subplot(111)
 
 #ax.plot( firms_0_t001,  label = 'F = 0', color = 'black')	
 #ax.plot( firms_1_t001, '--', color = 'black', )	
-ax.plot( firms_0_s050,  label = 'F = 0.5', color = 'black')	
-ax.plot( firms_1_s050, label = 'F = 0.5', color = 'red', )	
-ax.plot(  firms_0_s025, '--', label = 'F = 0.25', color = 'black')	
-ax.plot(  firms_1_s025,'--', label = 'F = 0.25',  color = 'red', )	
-#ax.plot(  firms_0_s010, label = 'F = 0.25', color = 'red')	
-#ax.plot(  firms_1_s010, '--', color = 'red', )	
+#ax.plot( firms_0_s010,  label = 'Dc = 0.1', color = 'blue')	
+#ax.fill_between( firms_0_s010.index, firms_0_s010 - firms_0_s010_std, firms_0_s010 + firms_0_s010_std, color = 'blue', alpha = .1 )
+ax.plot( firms_0_s050,  label = 'Shock at t = 100', color = 'black')	
+ax.fill_between( firms_0_s050.index, firms_0_s050 - firms_0_s050_std, firms_0_s050 + firms_0_s050_std, color = 'black', alpha = .1 )
+#ax.plot( firms_1_s050, label = 'F = 0.5', color = 'red', )	
+ax.plot(  firms_0_s030,  label = 'Shock at t = 150', color = 'purple')	
+ax.fill_between( firms_0_s030.index, firms_0_s030 - firms_0_s030_std, firms_0_s030 + firms_0_s030_std , color = 'purple', alpha = .1)
+#ax.plot(  firms_1_s025,'--', label = 'F = 0.25',  color = 'red', )	
+ax.plot(  firms_0_s0, label = 'No shock', color = 'gold')
+ax.fill_between( firms_0_s0.index, firms_0_s0 - firms_0_s0_std, firms_0_s0 + firms_0_s0_std , color = 'gold', alpha = .1)	
+#ax.plot(  firms_0_s010, 'o', label = 'F = 0.1', color = 'grey', )	
 
 ax.set_xlabel("Time step", fontsize = 16)	
-ax.set_ylabel("Firms population", fontsize = 16)	
+ax.set_ylabel("Firms population in Coastal region (over total)", fontsize = 16)	
 
 plt.legend()
 plt.show()
 
 '''
-fig = plt.figure(figsize=(14,10))
-ax = fig.add_subplot(111)
+firms_0_s0 = firms_0_s0.rename('Firms population')
 
-df_firms_concat.plot(ax=ax, style=['r--','b-'])
-firms_flood_1 = mean_variable(df, 'Cons region 1')
-firms_flood_0 = 2 * firms_flood_0
-firms_flood_1 = 2 * firms_flood_1
 
-b = [firms_0_s050, firms_1_s050, firms_0_s025, firms_1_s025, firms_0_s010, firms_1_s010]
-b_1 = [firms_0, firms_1]
-df_firms_concat = pd.concat(b, axis = 1)
+fig, axes = plt.subplots(1, 1, figsize=(15, 5), sharey=True)
+fig.suptitle('Firms population')
+sns.lineplot(x=  firms_0_s0.index , y = firms_0_s0 , data =  firms_0_s0)
 
-#df_firms_concat.columns = ['Coastal no-flood', 'Coastal flood', 'Inland no-flood', 'Inland flood'] 
+
+
+data = {'Agglomeration':[0.77, 0.75, 0.70, 0.18, 0.20, 0.23],
+        'Damage coeff' :[0, 0.3, 0.5, 0, 0.3, 0.5],
+        'Region': ['Coastal','Coastal', 'Coastal' , 'Internal', 'Internal', 'Internal']}
+
+df = pd.DataFrame(data)
+sns.barplot(x = "Region", y = "Agglomeration", hue = "Damage coeff", data = df)
+plt.show()
+
 '''
-
-
 
 '''Households'''
 drop_h = 0
 
-households_0_s050 =  af.mean_variable(df_s_050, 'Households region 0', drop_h)
-households_1_s050 =  af.mean_variable(df_s_050, 'Households region 1',drop_h)
-households_0_s025 =  af.mean_variable(df_s_025, 'Households region 0', drop_h)
-households_1_s025 =  af.mean_variable(df_s_025, 'Households region 1', drop_h)
-#households_0_s010 =  mean_variable(df_s_010, 'Households region 0',drop_h )
-#households_1_s010 =  mean_variable(df_s_010, 'Households region 1', drop_h)
+drop_firm = 0
+
+households_0_s050 =  af.mean_variable(df_s_050, "Population_Region_0_Households", drop_firm) /3500
+households_0_s050_std =  af.std_dev_variable(df_s_050, "Population_Region_0_Households" , drop_firm)  / 3500  / np.sqrt(800)# / 250 #* 2
+#firms_1_s050 =  af.mean_variable(df_s_050, 'Cons region 1', drop_firm) * 2
+#firms_0_s025a =  mean_variable(df_s_025a, 'Cons region 0', drop_firm)
+#firms_1_s025a =  mean_variable(df_s_025a, 'Cons region 1', drop_firm)
+households_0_s030 =  af.mean_variable(df_s_030 , "Population_Region_0_Households", drop_firm) / 3500 
+households_0_s030_std =  af.std_dev_variable(df_s_030, "Population_Region_0_Households", drop_firm)  / 3500  / np.sqrt(600) #* 2
+#firms_1_s025 =  af.mean_variable(df_s_025, 'Cons region 1', drop_firm) * 2
+
+#firms_0_s025 = ( firms_0_s025a + firms_0_s025b)/ 2
+#firms_1_s025 = ( firms_1_s025a + firms_1_s025b)/ 3
+households_0_s0 =  af.mean_variable(df_s_0, "Population_Region_0_Households", drop_firm) / 3500
+households_0_s0_std =  af.std_dev_variable(df_s_0, "Population_Region_0_Households", drop_firm)  / 3500  / np.sqrt(600)
+#households_0_s010 =  af.mean_variable(df_s_010, "Population_Region_0_Households", drop_firm) / 3500
+#firms_1_s010 =  mean_variable(df_s_010, 'Cons region 1', drop_firm) * 2
 
 
-fig = plt.figure(figsize=(14,10))
+fig = plt.figure(figsize=(10,10))
 ax = fig.add_subplot(111)
 #df_gdp_1_concat.plot(ax=ax, style=['r--','b-'])
 
-ax.plot( households_0_s050, label = 'F = 0.5', color = 'black')	
-ax.plot( households_1_s050,  color = 'red')	
-ax.plot(  households_0_s025, '--', label = 'F = 0.25', color = 'black')	
-ax.plot(  households_1_s025, '--',  color = 'red')	
-#ax.plot( households_0_s010, label = 'F = 0.1', color = 'red')	
-#ax.plot(  households_1_s010,'--', color = 'red')	
-#plt.xticks(np.arange(0,50,1))
-ax.set_xlabel("Time step")	
-ax.set_ylabel("Households population")	
-#plt.xticks(range(1, 50))
+
+
+#ax.plot( firms_0_t001,  label = 'F = 0', color = 'black')	
+#ax.plot( firms_1_t001, '--', color = 'black', )	
+ax.plot( households_0_s050,  label = 'Dc = 0.5', color = 'black')	
+ax.fill_between( households_0_s050.index, households_0_s050 - households_0_s050_std, households_0_s050 + households_0_s050_std, color = 'black', alpha = .1 )
+#ax.plot( firms_1_s050, label = 'F = 0.5', color = 'red', )	
+ax.plot(  households_0_s030,  label = 'Dc = 0.3', color = 'purple')	
+ax.fill_between( households_0_s030.index, households_0_s030 - households_0_s030_std, households_0_s030 + households_0_s030_std , color = 'purple', alpha = .1)
+#ax.plot(  firms_1_s025,'--', label = 'F = 0.25',  color = 'red', )	
+ax.plot(  households_0_s0, label = 'Dc = 0', color = 'gold')
+ax.fill_between( households_0_s0.index, households_0_s0 - households_0_s0_std, households_0_s0 + households_0_s0_std , color = 'gold', alpha = .1)	
+#ax.plot(  firms_0_s010, 'o', label = 'F = 0.1', color = 'grey', )	
+
+ax.set_xlabel("Time step", fontsize = 16)	
+ax.set_ylabel("Households population in Coastal region (over total)", fontsize = 16)	
 
 plt.legend()
 plt.show()
 
+
+
+'''
+WAGES
+'''
+wage_0_s050 =  af.mean_variable(df_s_050, "Av wage region 0", drop_firm) / af.mean_variable(df_s_050, "Cons price region 0", drop_firm)
+wage_1_s050 =  af.mean_variable(df_s_050, "Av wage region 1", drop_firm) / af.mean_variable(df_s_050, "Cons price region 1", drop_firm)
+
+wage_ratio_shock_100 = wage_0_s050  /  wage_1_s050 
+
+wage_0_s030 =  af.mean_variable(df_s_030, "Av wage region 0", drop_firm) / af.mean_variable(df_s_030, "Cons price region 0", drop_firm)
+wage_1_s030 =  af.mean_variable(df_s_030, "Av wage region 1", drop_firm) / af.mean_variable(df_s_030, "Cons price region 0", drop_firm)
+
+wage_ratio_shock_150 = wage_0_s030  /  wage_1_s030 
+
+wage_0_s0 =  af.mean_variable(df_s_0, "Av wage region 0", drop_firm) / af.mean_variable(df_s_0, "Cons price region 0", drop_firm)
+wage_1_s0 =  af.mean_variable(df_s_0, "Av wage region 1", drop_firm) / af.mean_variable(df_s_0, "Cons price region 0", drop_firm)
+
+wage_ratio_no_shock = wage_0_s0  /  wage_1_s0
+
+fig = plt.figure(figsize=(10,10))
+ax = fig.add_subplot(111)
+#df_gdp_1_concat.plot(ax=ax, style=['r--','b-'])
+
+
+
+#ax.plot( firms_0_t001,  label = 'F = 0', color = 'black')	
+#ax.plot( firms_1_t001, '--', color = 'black', )	
+#ax.plot( wage_ratio_shock_100,  label = 't = 100', color = 'black')	
+#ax.plot( wage_1_s050, '--', label = 't = 100 region 1', color = 'black')	
+
+
+ax.plot( wage_ratio_shock_150,  label = 't = 150', color = 'purple')	
+#ax.plot( wage_1_s030,  label = 't = 150 region 1', color = 'purple')	
+#ax.plot( firms_1_s050, label = 'F = 0.5', color = 'red', )	
+#ax.plot( wage_0_s0,  label = ' region 0', color = 'gold')	
+ax.plot( wage_ratio_no_shock ,  label = 'No shock', color = 'gold')
+#ax.plot(  firms_0_s010, 'o', label = 'F = 0.1', color = 'grey', )	
+
+ax.set_xlabel("Time step", fontsize = 16)	
+ax.set_ylabel("in Coastal / Inland wage ratio", fontsize = 16)	
+
+plt.legend()
+plt.show()
+
+
+'''
+PRODUCTIVITY
+'''
+
+delta_prod_t_100 =  af.mean_variable(df_s_050, "Delta prod region 0", drop_firm)
+delta_prod_t_150 =  af.mean_variable(df_s_030, "Delta prod region 0", drop_firm)
+delta_prod =  af.mean_variable(df_s_0, "Delta prod region 0", drop_firm)
+
+
+fig = plt.figure(figsize=(10,10))
+ax = fig.add_subplot(111)
+#df_gdp_1_concat.plot(ax=ax, style=['r--','b-'])
+
+
+
+#ax.plot( firms_0_t001,  label = 'F = 0', color = 'black')	
+#ax.plot( firms_1_t001, '--', color = 'black', )	
+ax.plot(delta_prod_t_100,  label = 't = 100', color = 'black')	
+#ax.plot( wage_1_s050, '--', label = 't = 100 region 1', color = 'black')	
+
+
+ax.plot(delta_prod_t_150,  label = 't = 150', color = 'purple')	
+#ax.plot( wage_1_s030,  label = 't = 150 region 1', color = 'purple')	
+#ax.plot( firms_1_s050, label = 'F = 0.5', color = 'red', )	
+#ax.plot( wage_0_s0,  label = ' region 0', color = 'gold')	
+ax.plot( delta_prod ,  label = 'No shock', color = 'gold')
+#ax.plot(  firms_0_s010, 'o', label = 'F = 0.1', color = 'grey', )	
+
+ax.set_xlabel("Time step", fontsize = 16)	
+ax.set_ylabel("in Coastal / Inland wage ratio", fontsize = 16)	
+
+plt.legend()
+plt.show()
 
 
 '''
@@ -370,22 +692,33 @@ ax.set_ylabel("log rank")
 plt.legend()
 plt.show()
 '''
-
+df_s_0 = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S0_T002_1100RUNS_500steps.csv', skiprows=2)
+df_s_030 = pd.read_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S03_T002_500RUNS_500steps_c.csv', skiprows=2)
+df_s_050 = pd.read_csv( r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\results\S05_T002_500RUNS_500steps_c.csv', skiprows=2)
 
 '''GDP'''
 
 drop_gdp = 120
-drop_end = 70
+drop_end = 100
 
-gdp_s050 =  af.mean_variable_log(df_s_050, 'GDP total', drop_gdp, drop_end)
-gdp_0_s050 =  af.mean_variable_log(df_s_050, 'GDP region 0', drop_gdp,drop_end)
-gdp_1_s050 =  af.mean_variable_log(df_s_050, 'GDP region 1', drop_gdp, drop_end)
-gdp_s025 =  af.mean_variable_log(df_s_025, 'GDP total', drop_gdp, drop_end)
-gdp_0_s025 =  af.mean_variable_log(df_s_025, 'GDP region 0', drop_gdp, drop_end)
-gdp_1_s025 =  af.mean_variable_log(df_s_025, 'GDP region 1', drop_gdp, drop_end)
-gdp_s010 =  mean_variable_log(df_s_010, 'GDP total', drop_gdp, drop_end)
-gdp_0_s010 =  af.mean_variable_log(df_s_010, 'GDP region 0', drop_gdp, drop_end)
-gdp_1_s010 =  af.mean_variable_log(df_s_010, 'GDP region 1', drop_gdp, drop_end)
+
+
+
+gdp_s0 =  np.log(af.mean_variable(df_s_0, 'GDP_cons_reg_0', drop_gdp, drop_end) + af.mean_variable(df_s_0, 'GDP_cons_reg_1', drop_gdp, drop_end))
+#gdp_s0_std =  af.std_dev_variable(df_s_0, 'GDP total', drop_gdp) / np.sqrt(1100)
+gdp_s050 =  np.log(af.mean_variable(df_s_050, 'GDP_cons_reg_0', drop_gdp, drop_end) + af.mean_variable(df_s_050, 'GDP_cons_reg_1', drop_gdp, drop_end))
+#gdp_s050_std =  af.std_dev_variable(df_s_050, 'GDP total', drop_gdp) / np.sqrt(500)
+#gdp_0_s050 =  af.mean_variable_log(df_s_050, 'GDP region 0', drop_gdp,drop_end)
+#gdp_1_s050 =  af.mean_variable_log(df_s_050, 'GDP region 1', drop_gdp, drop_end)
+gdp_s030 = np.log(af.mean_variable(df_s_030, 'GDP_cons_reg_0', drop_gdp, drop_end) + af.mean_variable(df_s_030, 'GDP_cons_reg_1', drop_gdp, drop_end))
+#gdp_s030_std =  af.std_dev_variable(df_s_030, 'GDP total', drop_gdp) / np.sqrt(500)
+#gdp_0_s025 =  af.mean_variable_log(df_s_025, 'GDP region 0', drop_gdp, drop_end)
+#gdp_1_s025 =  af.mean_variable_log(df_s_025, 'GDP region 1', drop_gdp, drop_end)
+#gdp_s010 =  mean_variable_log(df_s_010, 'GDP total', drop_gdp, drop_end)
+#gdp_0_s010 =  af.mean_variable_log(df_s_010, 'GDP region 0', drop_gdp, drop_end)
+#gdp_1_s010 =  af.mean_variable_log(df_s_010, 'GDP region 1', drop_gdp, drop_end)
+ #  + af.mean_variable_log(df_s_030, 'Price total', drop_gdp, drop_end)[150]
+
 
 ## GDP TOTAL PLOT ##
 fig = plt.figure(figsize=(14,10))
@@ -393,7 +726,8 @@ ax = fig.add_subplot(111)
 #df_gdp_1_concat.plot(ax=ax, style=['r--','b-'])
 
 ax.plot( gdp_s050,  label = 'F = 0.5', color = 'black')	
-ax.plot(  gdp_s025, label = 'F = 0.25', color = 'red')	
+ax.plot(  gdp_s030, label = 'F = 0.25', color = 'red')
+ax.plot(  gdp_s0, label = 'F = 0', color = 'gold')		
 #ax.plot( gdp_s010, label = 'F = 0.1', color = 'red')	
 #plt.xticks(np.arange(0,50,1))
 ax.set_xlabel("Time step")	
@@ -403,33 +737,156 @@ ax.set_ylabel('GDP')
 plt.legend()
 plt.show()
 
-## GDP REGION 0 ##
+
+## GDP NET TOTAL PLOT ##
+
+## GDP CONS is only coastal region ##
+
+gdp_s0_net =  af.mean_variable_log(df_s_0, 'GDP_cons', drop_gdp, drop_end) # -   af.mean_variable_log(df_s_0, 'Price total', drop_gdp, drop_end)  #+    af.mean_variable_log(df_s_0, 'Price total', drop_gdp, drop_end)[150] 
+gdp_s050_net  =  af.mean_variable_log(df_s_050, 'GDP_cons', drop_gdp, drop_end) #- af.mean_variable_log(df_s_050, 'Price total', drop_gdp, drop_end) #  +   af.mean_variable_log(df_s_050, 'Price total', drop_gdp, drop_end)[150]
+#gdp_0_s050 =  af.mean_variable_log(df_s_050, 'GDP region 0', drop_gdp,drop_end)
+#gdp_1_s050 =  af.mean_variable_log(df_s_050, 'GDP region 1', drop_gdp, drop_end)
+gdp_s030_net =  af.mean_variable_log(df_s_030, 'GDP_cons', drop_gdp, drop_end) #- af.mean_variable_log(df_s_030, 'Price total', drop_gdp, drop_end)
+
 
 fig = plt.figure(figsize=(14,10))
 ax = fig.add_subplot(111)
 #df_gdp_1_concat.plot(ax=ax, style=['r--','b-'])
-
-ax.plot( gdp_0_s050,  label = 'F = 0.5', color = 'green')	
-ax.plot(  gdp_0_s025, label = 'F = 0.25', color = 'blue')	
-ax.plot( gdp_0_s010, label = 'F = 0.1', color = 'red')	
+distance = 0.1
+ax.plot( gdp_s050_net,  label = 'DC = 0.5', color = 'black')
+#ax.fill_between( gdp_s050_net.index,gdp_s050_net - distance , gdp_s050_net + distance, color = 'black', alpha = .1 )	
+ax.plot(  gdp_s030_net, label = 'DC = 0.3', color = 'purple')
+#ax.fill_between( gdp_s030_net.index,gdp_s030_net - distance , gdp_s030_net + distance, color = 'purple', alpha = .1 )	
+ax.plot(  gdp_s0_net, label = 'Dc = 0', color = 'gold')		
+#ax.fill_between( gdp_s0_net.index,gdp_s0_net - distance , gdp_s0_net + distance, color = 'gold', alpha = .1 )	
+#ax.plot( gdp_s010, label = 'F = 0.1', color = 'red')	
 #plt.xticks(np.arange(0,50,1))
 ax.set_xlabel("Time step")	
-ax.set_ylabel('GDP REGION 0')	
+ax.set_ylabel('GDP')	
+#plt.xticks(range(1, 50))
+
+plt.legend()
+plt.show()
+
+## GDPs REGION 0 ##
+
+drop_gdp = 120
+drop_end = 200
+
+
+gdp_s0_net = af.mean_variable_log(df_s_0, 'GDP_cons_reg_0', drop_gdp, drop_end)
+gdp_s050_net  =  af.mean_variable_log(df_s_050, 'GDP_cons_reg_0', drop_gdp, drop_end) 
+#gdp_0_s050 =  af.mean_variable_log(df_s_050, 'GDP region 0', drop_gdp,drop_end)
+#gdp_1_s050 =  af.mean_variable_log(df_s_050, 'GDP region 1', drop_gdp, drop_end)
+gdp_s030_net = af.mean_variable_log(df_s_030, 'GDP_cons_reg_0', drop_gdp, drop_end) 
+
+gdp_s0_net_pc = gdp_s0_net  -   af.mean_variable_log(df_s_0, "Population_Region_0_Households", drop_firm)      
+gdp_s050_net_pc  =  gdp_s050_net - af.mean_variable_log(df_s_050, "Population_Region_0_Households", drop_firm) 
+#gdp_0_s050 =  af.mean_variable_log(df_s_050, 'GDP region 0', drop_gdp,drop_end)
+#gdp_1_s050 =  af.mean_variable_log(df_s_050, 'GDP region 1', drop_gdp, drop_end)
+gdp_s030_net_pc = gdp_s030_net - af.mean_variable_log(df_s_030, "Population_Region_0_Households", drop_firm) 
+
+
+## GDPs REGION 1 ##
+
+gdp_s0_int =  af.mean_variable_log(df_s_0, 'GDP_cons_reg_1', drop_gdp, drop_end) #/ af.mean_variable(df_s_0, 'Price total', drop_gdp, drop_end) - af.mean_variable(df_s_0, 'GDP_cons', drop_gdp, drop_end)
+pop_s0_int = 3500 - af.mean_variable(df_s_0, "Population_Region_0_Households", drop_firm)   
+gdp_s0_int_pc = gdp_s0_int - np.log(pop_s0_int)
+#gdp_s0_std =  af.std_dev_variable(df_s_0, 'GDP total', drop_firm) / np.sqrt(200)
+gdp_s050_int =  af.mean_variable_log(df_s_050, 'GDP_cons_reg_1', drop_gdp, drop_end) #- af.mean_variable_log(df_s_050, 'Price total', drop_gdp, drop_end) - af.mean_variable_log(df_s_050, 'GDP_cons', drop_gdp, drop_end)
+pop_s050_int = 3500 - af.mean_variable(df_s_050, "Population_Region_0_Households", drop_firm)  
+gdp_s050_int_pc = gdp_s050_int - np.log(pop_s050_int) 
+#gdp_s050_std =  af.std_dev_variable(df_s_050, 'GDP total', drop_firm) / np.sqrt(800)
+#gdp_0_s050 =  af.mean_variable_log(df_s_050, 'GDP region 0', drop_gdp,drop_end)
+#gdp_1_s050 =  af.mean_variable_log(df_s_050, 'GDP region 1', drop_gdp, drop_end)
+gdp_s030_int =  af.mean_variable_log(df_s_030, 'GDP_cons_reg_1', drop_gdp, drop_end) # - af.mean_variable_log(df_s_030, 'Price total', drop_gdp, drop_end) - af.mean_variable_log(df_s_030, 'GDP_cons', drop_gdp, drop_end)
+pop_s030_int = 3500 - af.mean_variable(df_s_030, "Population_Region_0_Households", drop_firm)  
+gdp_s030_int_pc =  gdp_s030_int - np.log(pop_s030_int)
+
+
+
+## --- PLOT PER CAPITA GDP ---##
+fig = plt.figure(figsize=(12,10))
+ax = fig.add_subplot(311)
+#df_gdp_1_concat.plot(ax=ax, style=['r--','b-'])
+distance = 0.05
+
+ax.plot( gdp_s050_net_pc,   label = 'Coastal DC = 0.5', color = 'blue')
+ax.plot( gdp_s050_int_pc,    label = 'Internal DC = 0.5', color = 'green')
+ax.get_xaxis().set_visible(False)
+ax.set_title('Damage coeffient = 0.5')
+ax.set_ylabel('GDP per capita (log)')	
+ax1 = fig.add_subplot(312)
+ax1.plot( gdp_s030_int_pc,label = 'Internal DC = 0.3', color = 'green')
+ax1.plot(  gdp_s030_net_pc, label = 'Coastal DC = 0.3',color = 'blue')
+ax1.set_title('Damage coeffient = 0.3')
+ax1.get_xaxis().set_visible(False)
+ax1.set_ylabel('GDP per capita (log)')	
+ax2 = fig.add_subplot(313)
+ax2.plot(gdp_s0_int_pc, label = 'Internal', color = 'green')	
+ax2.plot(  gdp_s0_net_pc, label = 'Coastal', color = 'blue')	
+#ax.fill_between( gdp_s05_net_pc.index,gdp_s050_net_pc - distance , gdp_s050_net_pc + distance, color = 'black', alpha = .1 )	
+ax2.set_title('Damage coeffient = 0')
+#ax.fill_between( gdp_s030_net_pc.index,gdp_s030_net_pc - distance , gdp_s030_net_pc + distance, color = 'purple', alpha = .1 )	
+	
+#ax.fill_between( gdp_s0_net_pc.index,gdp_s0_net_pc - distance , gdp_s0_net_pc + distance, color = 'gold', alpha = .1 )	
+#ax.plot( gdp_s010, label = 'F = 0.1', color = 'red')	
+#plt.xticks(np.arange(0,50,1))
+ax2.set_xlabel("Time step")	
+ax2.set_ylabel('GDP per capita (log)')	
 #plt.xticks(range(1, 50))
 
 plt.legend()
 plt.show()
 
 
-## GDP REGION 1 ##
+
+
+
+## PLOT REAL GDP REGION 0 AND REGION 1  ###
+
+fig = plt.figure(figsize=(12,10))
+ax = fig.add_subplot(211)
+#df_gdp_1_concat.plot(ax=ax, style=['r--','b-'])
+distance = 0.05
+
+ax.plot( gdp_s050_net,   label = 'DC = 0.5', color = 'black')
+ax.plot(  gdp_s0_net, label = 'DC = 0.5', color = 'gold')	
+ax.plot(  gdp_s030_net, label = 'DC = 0.3',color = 'purple')
+ax.get_xaxis().set_visible(False)
+ax.set_title('Coastal region')
+ax.set_ylabel('GDP  (log)')	
+ax1 = fig.add_subplot(212)
+ax1.plot( gdp_s030_int,label = 'DC = 0.3', color = 'purple')
+
+ax1.plot( gdp_s050_int,    label = 'DC = 0.5', color = 'black')
+ax1.set_title('Damage coeffient = 0.3')
+
+ax1.set_ylabel('GDP (log)')	
+
+ax1.plot(gdp_s0_int, label = 'DC = 0', color = 'gold')	
+
+#ax.fill_between( gdp_s05_net_pc.index,gdp_s050_net_pc - distance , gdp_s050_net_pc + distance, color = 'black', alpha = .1 )	
+
+#ax.fill_between( gdp_s030_net_pc.index,gdp_s030_net_pc - distance , gdp_s030_net_pc + distance, color = 'purple', alpha = .1 )	
+	
+#ax.fill_between( gdp_s0_net_pc.index,gdp_s0_net_pc - distance , gdp_s0_net_pc + distance, color = 'gold', alpha = .1 )	
+#ax.plot( gdp_s010, label = 'F = 0.1', color = 'red')	
+#plt.xticks(np.arange(0,50,1))
+ax2.set_xlabel("Time step")	
+ax2.set_ylabel('GDP per capita (log)')	
+#plt.xticks(range(1, 50))
+
+plt.legend()
+plt.show()
 
 fig = plt.figure(figsize=(14,10))
 ax = fig.add_subplot(111)
 #df_gdp_1_concat.plot(ax=ax, style=['r--','b-'])
 
-ax.plot( gdp_1_s050,  label = 'F = 0.5', color = 'green')	
-ax.plot(  gdp_1_s025, label = 'F = 0.25', color = 'blue')	
-ax.plot( gdp_1_s010, label = 'F = 0.1', color = 'red')	
+ax.plot( gdp_s050_int,  label = 'F = 0.5', color = 'green')	
+ax.plot( gdp_s030_int, label = 'F = 0.25', color = 'blue')	
+ax.plot(gdp_s0_int, label = 'F = 0.1', color = 'red')	
 #plt.xticks(np.arange(0,50,1))
 ax.set_xlabel("Time step")	
 ax.set_ylabel('GDP REGION 1')	
@@ -512,14 +969,20 @@ gdp_1.plot(ax=ax, style=['r--','b-'])
 Price analysis 
 '''
 
-price_drop = 120
-price_end = 70
+price_drop = 130
+price_end = 100
 
-price_0_s050 = af.mean_variable_log(df_s_050 , 'Cons price region 0', price_drop, price_end)
-price_1_s050 = af.mean_variable_log(df_s_050 , 'Cons price region 1', price_drop, price_end)
-price_0_s025 = af.mean_variable_log(df_s_025 , 'Cons price region 0', price_drop, price_end)
-price_1_s025 = af.mean_variable_log(df_s_025 , 'Cons price region 1', price_drop, price_end)
-#price_s010 = mean_variable_log(df_s_010 , 'Cons price region 0', price_drop, price_end)
+price_s050 = af.mean_variable(df_s_050 , 'Price total', price_drop, price_end)
+#price_1_s050 = af.mean_variable_log(df_s_050 , 'Cons price region 1', price_drop, price_end)
+price_s030 = af.mean_variable(df_s_030 , 'Price total', price_drop, price_end)
+#price_1_s025 = af.mean_variable_log(df_s_025 , 'Cons price region 1', price_drop, price_end)
+price_s0 = af.mean_variable(df_s_0 , 'Price total', price_drop, price_end)
+
+ur_s050 = af.mean_variable(df_s_050 , 'Unemployment total', price_drop, price_end)
+#price_1_s050 = af.mean_variable_log(df_s_050 , 'Cons price region 1', price_drop, price_end)
+ur_s030 = af.mean_variable(df_s_030 , 'Unemployment total', price_drop, price_end)
+#price_1_s025 = af.mean_variable_log(df_s_025 , 'Cons price region 1', price_drop, price_end)
+ur_s0 = af.mean_variable(df_s_0 , 'Unemployment total', price_drop, price_end)
 
 '''
 price_s050 = mean_variable_log(df_s_050 , 'Cons price region 1', price_drop, price_end)
@@ -533,20 +996,24 @@ fig = plt.figure(figsize=(14,10))
 ax = fig.add_subplot(211)
 #df_gdp_1_concat.plot(ax=ax, style=['r--','b-'])
 
-ax.plot( price_0_s050,  label = 'Region 0', color = 'black')
-ax.plot( price_1_s050,  label = 'Region 1', color = 'red')	
+ax.plot( price_s050,  label = 'Dc = 0.5', color = 'black')
+ax.plot( price_s030,  label = 'Dc = 0.3', color = 'purple')	
+ax.plot( price_s0,  label = 'Dc = 0', color = 'gold')	
 #ax.set_xlabel("Time step")	
 ax.set_ylabel('Price')
-ax.set_title('F = 0.5')	
+ax.set_title('Price')	
 ax.legend()
 ax1 = fig.add_subplot(212)
-ax1.plot(  price_0_s025, label = 'Region 0', color = 'black')	
-ax1.plot(  price_1_s025, label = 'Region 1', color = 'red')	
+#ax1.plot(  price_0_s025, label = 'Region 0', color = 'black')	
+#ax1.plot(  price_1_s025, label = 'Region 1', color = 'red')	
 #ax.plot( price_s010, label = 'F = 0.1', color = 'red')	
 #plt.xticks(np.arange(0,50,1))
+ax1.plot( ur_s050,  color = 'black')
+ax1.plot( ur_s030,   color = 'purple')	
+ax1.plot( ur_s0,  color = 'gold')
 ax1.set_xlabel("Time step")	
-ax1.set_ylabel('Price ')	
-ax1.set_title('F = 0.25')	
+ax1.set_ylabel('Unemployment')	
+ax1.set_title('Unemployment rate')	
 #ax1.title('Region 1')
 #plt.xticks(range(1, 50))
 
@@ -935,10 +1402,12 @@ df_pi = macro_variables[7]
 df_pi[['Av wage region 0','Av wage region 1', 'Wage diff 0', 'Wage diff 1']] = pd.DataFrame(df_pi.Average_Salary.to_list(), index= df_pi.index)
 df_pi['Wage prod ratio 0']= df_pi['Av wage region 0']/ df_pi['Prod region 0']
 df_pi_int = df_pi[['Cons price region 0', 'Prod region 0', 'Av wage region 0', 'Delta prod region 0','Wage prod ratio 0'  ]]
- 
-for i in range(len(macro_variables)):
+
+transition = 0 
+macro_variables_S05_T003_SHOCK100 = macro_variables
+for i in range(len(macro_variables_S05_T003_SHOCK100)):
     print(i)
-    macro_variable = macro_variables[i]
+    macro_variable = macro_variables_S05_T003_SHOCK100[i]
 #plot_list_2var_comp_first_difference(macro_variable.GDP,macro_variable.Consumption_firms_av_prod ,200 , 50, "Turning the tide of agglomeration")
 #af.plot_list_log(macro_variable.INVESTMENT, range(transition, steps), "Investment")
 #af.plot_list_log(macro_variable.CONSUMPTION, range(transition, steps), "Consumption")
@@ -946,7 +1415,7 @@ for i in range(len(macro_variables)):
 #plot_list(macro_variable.Aggregate_Employment, range(transition, steps), "Aggregate Employment")
 #plot_list(macro_variable.Population_Regional, range(steps), "Population")
 #af.plot_list_log(macro_variable.Average_Salary, range(transition, steps) , "Average Salary")
-    af.plot_list(macro_variable.Population_Regional_Households, range(transition,steps), "Number of households")
+  #  af.plot_list(macro_variable.Population_Regional_Households, range(transition,steps), "Number of households")
    # af.plot_list_log(macro_variable.Cosumption_price_average,  range(transition,  steps) , "Consumption price average")
     af.plot_list(macro_variable.Population_Regional_Cons_Firms, range(transition, steps), "Number of consumption firms")
 #af.plot_list_log(macro_variable.Capital_firms_av_prod, range(transition, steps), " Average productivity Cap firms")

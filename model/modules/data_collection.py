@@ -1,7 +1,9 @@
 # A file for storing data collection functions
 # model/modules/data_collection.py
-from scipy.stats import beta 
-#import numpy as np
+#from scipy.stats import beta 
+seed_value = 12345678
+import numpy as np
+np.random.seed(seed=seed_value)
 #from model.classes.capital_good_firm import CapitalGoodFirm
 #from model.classes.consumption_good_firm import ConsumptionGoodFirm
 #from model.classes.household import Household
@@ -421,3 +423,62 @@ def price_average_cap(model):
     cap_prices = gov.av_price_cap
 
     return cap_prices
+
+'''
+FUNCTION FOR THE SA/ BATCH
+'''
+def gdp_SA(model):
+    GDP = 0
+    agents = model.firms2 #model.schedule.agents
+    for i in range(len(agents)):
+        firm = agents[i]
+        GDP += firm.price * firm.production_made
+    
+    return GDP
+
+def regional_unemployment_rate_coastal(model):
+    gov = model.governments[0]
+    unemployment_rate = gov.unemployment_rates[0]
+    return round(unemployment_rate, 2)
+
+
+def price_SA(model):
+    price = 0 
+    agents = model.firms2 
+    for i in range(len(agents)):
+        a = agents[i]
+        #if a.type == "Cons":
+        price += a.price * sum(a.market_share) 
+    return round( price/ 2, 2)
+
+
+
+
+
+
+
+def regional_unemployment_rate_SA(model):
+    gov = model.governments[0]
+    unemployment_rate = gov.unemployment_rates[4]
+    return round(unemployment_rate, 2)
+
+
+def consumption_SA(model):
+    gov = model.governments[0]
+    cons = gov.aggregate_cons[2]
+    
+    return cons #,  old_exp_C * ( 1 + constant_g)]
+
+
+
+def investment_SA(model):
+    I = 0
+   # I1_log = 0
+    #I0_log = 0
+    agents = model.firms2  #model.schedule.agents
+    for i in range(len(agents)):
+        firm = agents[i]
+        #if firm.type == "Cons"
+        I += firm.investment_cost
+    return I
+    

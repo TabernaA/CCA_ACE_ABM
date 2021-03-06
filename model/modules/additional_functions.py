@@ -16,6 +16,15 @@ def mean_variable(dataset, variable, drop = 0, drop_end = 0):
     variable_mean = variable_all.mean(axis = 1)
     return variable_mean
     
+
+def std_dev_variable(dataset, variable, drop = 0, drop_end = 0):
+    variable_all = dataset.filter(like = variable)
+    variable_all = variable_all.drop(variable_all.index[:drop], axis = 0)
+    if drop_end != 0:
+        variable_all = variable_all.drop(variable_all.index[drop_end:], axis = 0)
+    variable_mean = variable_all.std(axis = 1)
+    return variable_mean
+
 def mean_variable_log(dataset, variable, drop= 0, drop_end = 0):
     variable_all = dataset.filter(like = variable)
     variable_all = variable_all.drop(variable_all.index[:drop], axis = 0)

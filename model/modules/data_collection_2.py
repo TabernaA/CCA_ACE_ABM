@@ -7,7 +7,9 @@ Created on Fri Nov 13 15:40:14 2020
 # model/modules/data_collection.py
 #from scipy.stats import beta 
 #import numpy as np
+seed_value = 12345678
 import random
+random.seed(seed_value)
 import math
 #from model.classes.capital_good_firm import CapitalGoodFirm
 #from model.classes.consumption_good_firm import ConsumptionGoodFirm
@@ -46,6 +48,11 @@ def ld_cons(model):
     agents = model.firms2
     for i in range(len(agents)):
         firm = agents[i]
+        
+        
+        
+        
+
         #if firm.type == "Cap":
         if firm.region == 0:
             LD0 += firm.labor_demand
@@ -121,6 +128,19 @@ def gdp_cons(model):
             GDP0 += firm.price * firm.production_made
         elif firm.region == 1:
             GDP1 += firm.price * firm.production_made
+    return[ round(GDP0, 3), round(GDP1, 3), GDP0 + GDP1]
+
+def real_gdp_cons(model):
+    GDP0 = 0
+    GDP1 = 0
+    agents = model.firms2 #model.schedule.agents
+    for i in range(len(agents)):
+        firm = agents[i]
+        #if firm.type == "Cons":
+        if firm.region == 0:
+            GDP0 += firm.production_made
+        elif firm.region == 1:
+            GDP1 +=  firm.production_made
     return[ round(GDP0, 3), round(GDP1, 3), GDP0 + GDP1]
 
 def RD_total(model):
@@ -510,4 +530,11 @@ def sales_firms(model):
     return[sales]
 
 
-
+def debt(model):
+    agents = model.firms2
+    debt = 0
+    for i in range(len(agents)):
+        a = agents[i]
+        debt += a.debt
+    return debt 
+        

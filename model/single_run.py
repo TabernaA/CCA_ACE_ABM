@@ -1,7 +1,11 @@
 # model/app.py
 # bringing all elements of the model together
 # contains run method
-
+seed_value = 12345678
+import random
+random.seed(seed_value)
+import numpy as np
+np.random.seed(seed=seed_value)
 #from model.classes.capital_good_firm import CapitalGoodFirm
 #from model.classes.consumption_good_firm import ConsumptionGoodFirm
 #from model.classes.household import Household
@@ -13,17 +17,18 @@ import matplotlib.pyplot as plt
 import model.modules.additional_functions as af
 #import scipy.stats as st        
 import seaborn as sns
-import random
-import numpy as np
+#import random
+
 import pandas as pd
 import statsmodels.api as sm
 
 
-steps =  200
+steps =  300
 
 
-model = KSModel(F1 = 60, F2 =250, H = 3500, B= 1,  T= 0.03, S = 0)
-model.reset_randomizer(1)
+model = KSModel(F1 = 50, F2 =250, H = 3500, B= 1,  T= 2, S = 0)
+model.reset_randomizer(seed_value)
+
 for i in range(steps):
     print("#------------ step", i+1, "------------#")
     model.step()
@@ -45,7 +50,7 @@ macro_variable[['Cons price region 0','Cons price region 1']] = pd.DataFrame(mac
 #macro_variable[['Prod cons region 0','Prod cons region 1', 'Delta prod cons region 0', 'Delta prod cons region 1']] = pd.DataFrame(macro_variable.Consumption_firms_av_prod.to_list(), index= macro_variable.index)
 macro_variable[['Prod region 0','Prod region 1', 'Delta prod region 0', 'Delta prod region 1' ]] = pd.DataFrame(macro_variable.Regional_average_productivity.to_list(), index= macro_variable.index)    
 macro_variable[['GDP region 0','GDP region 1', 'GDP total']] = pd.DataFrame(macro_variable.GDP.to_list(), index= macro_variable.index)
-macro_variable[['Unemployment region 0','Unemployment region 1', 'Unemployment diff 0','Unemployment diff 1' ]] = pd.DataFrame(macro_variable.Unemployment_Regional.to_list(), index= macro_variable.index)
+macro_variable[['Unemployment region 0','Unemployment region 1', 'Unemployment diff 0','Unemployment diff 1', 'Unemployment total' ]] = pd.DataFrame(macro_variable.Unemployment_Regional.to_list(), index= macro_variable.index)
 #macro_variable[['MS track 0', 'MS track 1']] = pd.DataFrame(macro_variable.MS_track.to_list(), index= macro_variable.index)
 macro_variable[['CONS 0', 'CONS 1', 'CONS Total', 'Export']] = pd.DataFrame(macro_variable.CONSUMPTION.to_list(), index= macro_variable.index)
 macro_variable[['INV 0', 'INV 1', 'INV Total']] = pd.DataFrame(macro_variable.INVESTMENT.to_list(), index= macro_variable.index)
@@ -71,7 +76,11 @@ macro_variable[['Wages region 0','Wages region 1','Wage diff 0', 'Wage diff 1']]
 #plt.show()
 
 transition = 60
-
+'''
+bankruptcy =  micro_variable.loc[(micro_variable['Bankrupt'] > 0)]
+bankruptcy = bankruptcy.loc[140:, ]
+bankruptcy['Bankrupt'].hist()
+'''
 #mv = micro_variable.loc[(micro_variable['Price'] > 5) & (micro_variable.index.get_level_values('Step') > 275)] 
 
 
@@ -132,6 +141,8 @@ af.mean_variable(macro_variable,'Unemployment rate', 100).plot()
 af.plot_check(macro_variable.INVESTMENT, macro_variable.GDP_cap, range(steps), "Checking cap ")
 af.plot_check(macro_variable.CONSUMPTION, macro_variable.GDP_cons, range(steps), "Checking cons")
 
+
+macro_variable['Debt'].plot()
 #for i in range (step):
 
 '''
@@ -307,22 +318,22 @@ mask[np.triu_indices_from(mask)] = 1
 sns.heatmap(corrMatrix, mask= mask, ax= ax, annot= True)
 
 
-firm_list = model.list_firms
+firm_list = model.firms1
 
 
-price_time_firm_list = model.list_firms[200]
+#price_time_firm_list = model.list_firms[200]
 price_ms_list = []
 price_ms_list_cap = []
 demand_cap = []
 orders_cons = []
-for i in range(len(price_time_firm_list)):
-    agent = price_time_firm_list[i]
-    if agent.type == 'Cap' and agent.region ==1:
-        price_ms_list_cap.append([agent, agent.price, agent.net_worth])
+for i in range(len(firm_list)):
+    agent = firm_list[i]
+   # if agent.type == 'Cap' and agent.region ==1:
+    #    price_ms_list_cap.append([agent, agent.price, agent.net_worth])
         #if sum(agent.real_demand_cap) != 0: 
            # demand_cap.append( [agent, agent.real_demand_cap, agent.unique_id])
-    if agent.type == 'Cons' and agent.region == 1:
-        price_ms_list.append([agent, agent.price, agent.markup])
+    if agent.type == 'Cap': # and agent.region == 1:
+        price_ms_list.append([agent, agent.price, agent.productivity])
         #if agent.quantity_ordered != 0 and agent.supplier_id == 24:
            # orders_cons.append([agent, agent.quantity_ordered, agent.supplier_id])
             

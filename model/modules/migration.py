@@ -8,6 +8,10 @@ modules/migration.py
 import math 
 #import random
 import bisect
+seed_value = 12345678
+
+import numpy as np
+np.random.seed(seed=seed_value)
 from scipy.stats import bernoulli
 
 

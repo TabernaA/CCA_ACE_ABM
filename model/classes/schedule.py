@@ -12,7 +12,7 @@ A custom activation class
 from collections import defaultdict
 from mesa.time import StagedActivation
 class StagedActivationByType(StagedActivation):
-    def __init__(self, model, stage_list, shuffle=True, shuffle_between_stages=False):
+    def __init__(self, model, stage_list, shuffle=False, shuffle_between_stages=False):
        super().__init__(model, stage_list, shuffle, shuffle_between_stages)
        self.agents_by_type = defaultdict(dict)
 

@@ -4,11 +4,16 @@ Created on Mon Nov  2 18:46:57 2020
 
 @author: TabernaA
 """
+seed_value = 12345678
+import random
+random.seed(seed_value)
+import numpy as np
+np.random.seed(seed=seed_value)
 from mesa import Agent
 #import numpy as np
 #from sklearn import preprocessing
 import math 
-import random
+
 from scipy.stats import beta
 from model.classes.vintage import Vintage
 #import bisect
@@ -53,11 +58,11 @@ class Government (Agent):
         self.aggregate_unemployment = [0,0]
         self.aggregate_employment = [0,0]
         self.regional_av_prod = [ 0, 0, 0, 0]
-        self.unemployment_rates =  [ 0, 0, 0, 0]
+        self.unemployment_rates =  [ 0, 0, 0, 0, 0]
         self.cap_av_prod = [ 0, 0, 0, 0]
         self.export_demand =  300
         self.export_demand_list = []
-        self.fraction_exp = 0.015
+        self.fraction_exp = 0.0125
         self.best_firm1 = [0,0]
         
         #self.open_vacancies = [ ]
@@ -85,19 +90,20 @@ class Government (Agent):
           #  self.minimum_wage_region[r] = self.minimum_wage_region[r] * (1 + 0.5 * delta_unemployment )
     def open_vacancies_list(self):
         
-        cons_firms = self.model.firms2
+        cons_firms = self.model.firms_1_2
         r = self.region
         self.open_vacancies_cons = []
         for i in range(len(cons_firms)):
             if cons_firms[i].open_vacancies == True and cons_firms[i].region == r:
                 self.open_vacancies_cons.append(cons_firms[i])
+        '''
         cap_firms = self.model.firms1
         r = self.region
         self.open_vacancies_cap = []
         for i in range(len(cap_firms)):
             if cap_firms[i].open_vacancies == True and cap_firms[i].region == r:
                 self.open_vacancies_cap.append(cap_firms[i])
-        
+        '''
                 
         
 
@@ -319,9 +325,11 @@ class Government (Agent):
         all_firms_cons = self.model.firms2
         
         for firm in all_firms_cons:
-            if  (firm.market_share[0] + firm.market_share[1]) < 0.002 or  firm.labor_demand == 0: #firm.lifecycle > 6):
+            if  (firm.market_share[0] + firm.market_share[1]) < 0.0025 or  firm.labor_demand == 0: #firm.lifecycle > 6):
                 if firm.lifecycle > 6:
                 # fire employees
+                    firm.bankrupt = len(firm.employees_IDs)
+                    
                     for employee_id in firm.employees_IDs:
                         employee = firm.model.schedule.agents[employee_id]
                         employee.employer_ID = None
@@ -405,6 +413,7 @@ class Government (Agent):
                     
                     
                     firm.lifecycle = -1
+              
                    # print("new entri cons!", firm.unique_id)
         
         
@@ -442,10 +451,11 @@ class Government (Agent):
         
         unemployment_rate_0 =  round( max( 1 , ARU0)/ max( 1,self.regional_pop_hous[0]) , 2)
         unemployment_rate_1 =  round( max( 1 , ARU1)/ max(1 ,self.regional_pop_hous[1]) , 2)
+        unemployment_rate_total = (ARU0 + ARU1) / sum(self.regional_pop_hous)
         
         unemployment_diffrence0 , unemployment_diffrence1 = self.variable_difference(unemployment_rate_0, unemployment_rate_1, False)
                     
-        self.unemployment_rates = [ round(unemployment_rate_0, 2) ,  round(unemployment_rate_1, 2), unemployment_diffrence0, unemployment_diffrence1  ]
+        self.unemployment_rates = [ round(unemployment_rate_0, 2) ,  round(unemployment_rate_1, 2), unemployment_diffrence0, unemployment_diffrence1, unemployment_rate_total  ]
         
          ## --- CONSUMPTION ---##
         
@@ -463,7 +473,7 @@ class Government (Agent):
         if self.model.S > 0: 
             if int(self.model.schedule.time) - 1 == self.model.shock_time:
         
-                print('cut cons')
+               # print('cut cons')
                 shock = self.model.S 
                 C0 = (1 - shock) * C0
         

@@ -1,6 +1,10 @@
 # model/classes/consumption_good-firm
 # A MESA Agent class for consumption good firms (sector 2)
-
+seed_value = 12345678
+import random
+random.seed(seed_value)
+import numpy as np
+np.random.seed(seed=seed_value)
 from mesa import Agent
 
 from model.modules import research_and_development as rd
@@ -10,8 +14,8 @@ from model.modules import migration as migration
 from model.classes.vintage import Vintage
 from scipy.stats import bernoulli
 
-import random
-import statistics
+
+#import statistics
 #import math
 
 
@@ -79,7 +83,7 @@ class ConsumptionGoodFirm(Agent):
         #Migration tracking
         self.distances_mig = []
         self.region_history = []
-        self.migration_pr = self.model.pr_migration_f
+        #self.migration_pr = self.model.pr_migration_f
         self.migration_start = 80
         
 
@@ -87,6 +91,7 @@ class ConsumptionGoodFirm(Agent):
         self.CCA_resilience = [1, 1 ]     # placeholder value for now
         self.CCA_RD_budget = 0 
         self.flooded = False
+        self.bankrupt = None
         
        
 
@@ -141,7 +146,7 @@ class ConsumptionGoodFirm(Agent):
         #print("ConsumptionGoodFirm:", self.unique_id,"past demands 3:",local_past_demands, "inventories", self.inventories, "capital_stock", capital_stock)
         
         #past_error = 0.65 * (self.real_demand - self.expected_production )
-        expected_production = round(statistics.mean(local_past_demands), 4)    # expected production is the mean of the last 3    demands     
+        expected_production = round(np.mean(local_past_demands), 4)    # expected production is the mean of the last 3    demands     
         #expected_production = self.expected_production
         if self.flooded == True:
             self.inventories = (1 - self.model.S) * self.inventories
@@ -193,7 +198,7 @@ class ConsumptionGoodFirm(Agent):
             # unit cost advantage of new machines
             UCA = self.wage / vintage.productivity - self.wage / new_machine[0]                    #payback rule
 
-            if (UCA > 0 and (new_machine[1]/UCA <= 3)) or vintage.age >= vintage.lifetime - 1:  # don't consider if productivity is equal, prevent division by zero
+            if (UCA > 0 and (new_machine[1]/UCA <= 3)): # or vintage.age >= vintage.lifetime - 1:  # don't consider if productivity is equal, prevent division by zero
                 replacement_investment += vintage.amount
         return replacement_investment
     
@@ -239,7 +244,7 @@ class ConsumptionGoodFirm(Agent):
              maximum_debt_quantity =  debt_affordable // supplier_price
              quantity_bought = min( total_number_machines_wanted , total_quantity_affordable_own + maximum_debt_quantity)
              
-             self.debt = min( debt_affordable, ( total_quantity_affordable_own + maximum_debt_quantity - total_number_machines_wanted)  * supplier_price )
+             self.debt = min( debt_affordable, ( quantity_bought -  total_quantity_affordable_own )  * supplier_price )
              if self.debt >= debt_affordable:
                  self.credit_rationed = True 
         
@@ -389,8 +394,8 @@ class ConsumptionGoodFirm(Agent):
         '''
         
         ##-- check what was my demand in both region --#
-        self.regional_demand = [average_regional_cons[0] * self.market_share[0] ,  average_regional_cons[1] * self.market_share[1]] #,  round( average_regional_cons[2] * self.market_share[2], 5)]
-        self.monetary_demand = sum(self.regional_demand)
+        self.regional_demand = [round( average_regional_cons[0] * self.market_share[0], 5) , round( average_regional_cons[1] * self.market_share[1], 5)] #,  round( average_regional_cons[2] * self.market_share[2], 5)]
+        self.monetary_demand = round(sum(self.regional_demand) , 6)
         
         ##-- convert monetary in real demand --##
         self.real_demand = round( self.monetary_demand / self.price, 6)
@@ -432,7 +437,8 @@ class ConsumptionGoodFirm(Agent):
         
         if self.order_canceled == True:
             self.scrapping_machines = 0 
-            self.debt -= self.investment_cost
+            if self.debt > 0:
+               self.debt = max( 0 , self.debt - self.investment_cost )
             self.investment_cost = 0
             self.quantity_ordered = 0
             self.order_canceled = False
@@ -442,7 +448,8 @@ class ConsumptionGoodFirm(Agent):
             self.quantity_ordered = max( 0 , self.quantity_ordered - self.order_reduced)
             self.scrapping_machines -= self.order_reduced
             self.investment_cost = self.quantity_ordered * supplier.price
-            self.debt -= self.order_reduced * supplier.price 
+            if self.debt > 0:
+                self.debt = max( 0, self.debt - self.order_reduced * supplier.price )
         
         self.profits = round( self.sales - self.total_costs - self.debt * ( 1 + self.model.interest_rate ) , 3)
         
@@ -647,7 +654,7 @@ class ConsumptionGoodFirm(Agent):
     def migrate(self):
         
         ##----stocastic barrier to migration --##
-        if  bernoulli.rvs(self.migration_pr) == 1:
+        if  bernoulli.rvs(0.25) == 1:
             r = self.region
             #demand = [self.regional_demand[0] + self.regional_demand[2], self.regional_demand[1]]
             demand = self.regional_demand
@@ -675,6 +682,7 @@ class ConsumptionGoodFirm(Agent):
     def stage0(self):
      #   if self.model.schedule.time > self.migration_start:
         #
+        self.bankrupt = None
         if self.lifecycle > 16:
                 self.migrate()
         

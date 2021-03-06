@@ -7,9 +7,11 @@ labor_demand()   : for firms
 hire_and_fire()  : for firms
 
 '''
+seed_value = 12345678
 import random
+random.seed(seed_value)
 import math
-import numpy as np
+#import numpy as np
 
 
 ''' Labor Search:
@@ -217,7 +219,7 @@ def hire_and_fire(labor_demand, employees_IDs, open_vacancies, model, id):
         firing_employees = abs( desired_employees - len(employees_IDs))
         #print("firing employees", firing_employees)
         for i in range( int(firing_employees)):
-            j = employees_IDs[0]
+          #  j = employees_IDs[0]
             employee = model.schedule.agents[employees_IDs[0]]
             employee.employer_ID = None
             del employees_IDs[0]

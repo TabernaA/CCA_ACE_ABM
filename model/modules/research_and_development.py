@@ -8,11 +8,13 @@ innovate()
 imitate()
 
 '''
-
-import math
+seed_value = 12345678
 import random
+random.seed(seed_value)
+import math
 import bisect
-
+import numpy as np
+np.random.seed(seed=seed_value)
 from scipy.stats import bernoulli
 from scipy.stats import beta
 
