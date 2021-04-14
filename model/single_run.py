@@ -23,10 +23,10 @@ import pandas as pd
 import statsmodels.api as sm
 
 
-steps =  300
+steps =  20
 
 
-model = KSModel(F1 = 50, F2 =250, H = 3500, B= 1,  T= 2, S = 0)
+model = KSModel(F1 = 50, F2 =250, H = 3500, B= 1,  T= 2, S = 0, seed= 4)
 model.reset_randomizer(seed_value)
 
 for i in range(steps):
@@ -74,6 +74,9 @@ macro_variable[['Wages region 0','Wages region 1','Wage diff 0', 'Wage diff 1']]
 #fig, ax = plt.subplots()
 #cycles.plot(ax=ax, style=['r--', 'b-'])
 #plt.show()
+
+
+macro_variable_shock = macro_variable
 
 transition = 60
 '''

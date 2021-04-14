@@ -23,7 +23,7 @@ from model.modules.data_collection_2 import *
 
 #   def __init__(self, F1 = 5, F2= 10, H= 10, B= 1, T= 0.02, S = 0.1, width=1, height=2):
 class KSModel(Model):
-    def __init__(self, F1= 50, F2= 250, H= 3500, B= 1, T= 2, S=0, width=1, height=2):
+    def __init__(self, F1= 50, F2= 250, H= 3500, B= 1, T= 0.1, seed = seed_value, S=1, width=1, height=2):
         self.num_firms1 = F1
         self.num_firms2 = F2
         self.num_households = H
@@ -43,6 +43,9 @@ class KSModel(Model):
         self.ids_region1 = []
         self.governments = []
         self.list_firms = []
+        random.seed(seed)
+        np.random.seed(int(seed))
+        self.reset_randomizer(seed)
        # self.pr_migration_f = 0.1
        # self.pr_migration_h = 0.15
         
@@ -66,12 +69,14 @@ class KSModel(Model):
         self.debt_sales_ratio = 2
         self.interest_rate = 0.01
         self.S = S /10
-        self.shock_time = 150
+        self.shock_time = 75
+        self.beta_a = 3
+        self.beta_b = 27
 
 
         # transport cost for [region0, region1]
-        self.transport_cost = T /100
-        self.transport_cost_RoW =  2 * T/100
+        self.transport_cost = T 
+        self.transport_cost_RoW =  2 * T
 
 
         for i in range(self.num_agents):
@@ -189,6 +194,22 @@ class KSModel(Model):
                 # 'Sectoral_liquid_assets': sectoral_aggregate_liquid_assets,
                 "GDP_cons": gdp_cons,
                 "GDP_cap": gdp_cap,
+                'Real GDP coastal': real_gdp_cons_reg_0,
+                'Real GDP internal': real_gdp_cons_reg_1,
+                'Unemployment rate coastal':  regional_unemployment_rate_coastal,
+                'Unemployment rate internal':  regional_unemployment_rate_internal,
+                'Price coastal':  price_average_cons_coastal,
+                'Price internal':  price_average_cons_internal,
+                'INVESTMENT coastal': investment_coastal,
+                'INVESTMENT inland': investment_inland,
+                'CONSUMPTION coastal': consumption_coastal,
+                'CONSUMPTION inland': consumption_inland,
+                'Inland productivity average': av_productivity_inland,
+                'Coastal productivity average': av_productivity_coastal,
+                'Inland productivity growth': gr_productivity_inland,
+                'Coastal productivity growth': gr_productivity_coastal,
+                
+                
                 
                 "INVESTMENT" : investment,
                 "INVENTORIES" : inventories,

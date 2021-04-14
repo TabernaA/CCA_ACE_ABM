@@ -105,10 +105,11 @@ def firms_migration_probability(demand_distance, r,   model,  w_1 = 0.5, w_2 = 0
     prob_migration = 0
 
     profitability = model.datacollector.model_vars["Regional_profits_cons"][int(model.schedule.time)][r + 2]
+    
     #gov = model.governments[0]
     #profitability = gov.net_sales_cons_firms[r + 2]
     if profitability < 0: 
-          prob_migration =  1 - math.exp(w_1 * demand_distance  +   w_2 * profitability) 
+        prob_migration =  1 - math.exp(w_1 * demand_distance  +   w_2 * profitability) 
     
     return prob_migration
    
@@ -126,7 +127,7 @@ def firm_migrate(mp, model, region, unique_id, employees_IDs, net_worth, wage, c
         migration_cost = len(employees_IDs) * wage 
 
         ##--- if migration is affordable --##
-        if migration_cost < 0.75 * net_worth:
+        if migration_cost <= 0.75 * net_worth:
             ##--remove migration costs from ym net worth, fire employees and move out --##
             net_worth -= migration_cost
             if capital_vintage != 0:
@@ -147,6 +148,7 @@ def firm_migrate(mp, model, region, unique_id, employees_IDs, net_worth, wage, c
             
            # model.grid.move_agent(firm, (0, 1-region))
             firm.lifecycle = 0
+            firm.production_made = 0
             gov = model.governments[0]
             if firm.type == "Cons":
                 wage = gov.salaries_cons[1 - region] #* 1.1

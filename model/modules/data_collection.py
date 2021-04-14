@@ -24,6 +24,34 @@ def productivity_firms_average(model):
     return average_prod
         
 
+def av_productivity_coastal(model):
+    gov = model.governments[0]
+    average_prod = gov.regional_av_prod[0]
+    
+    return average_prod
+        
+
+
+def av_productivity_inland(model):
+    gov = model.governments[0]
+    average_prod = gov.regional_av_prod[1]
+    
+    return average_prod
+        
+def gr_productivity_coastal(model):
+    gov = model.governments[0]
+    average_prod = gov.regional_av_prod[2]
+    
+    return average_prod
+        
+
+
+def gr_productivity_inland(model):
+    gov = model.governments[0]
+    average_prod = gov.regional_av_prod[3]
+    
+    return average_prod
+
 
 def productivity_consumption_firms_average(model):
     gov = model.governments[0]
@@ -87,6 +115,21 @@ def regional_unemployment_rate(model):
     '''
     
     return   unemployment_rate 
+
+
+def regional_unemployment_rate_coastal(model):
+    gov = model.governments[0]
+    unemployment_rate = gov.unemployment_rates[0]
+
+    return   unemployment_rate 
+
+
+def regional_unemployment_rate_internal(model):
+    gov = model.governments[0]
+    unemployment_rate = gov.unemployment_rates[1]
+
+    
+    return   unemployment_rate
 
 
 def regional_aggregate_market_share(model):
@@ -357,11 +400,11 @@ def regional_balance(model):
             d1 = a.fiscal_balance
     return [d0, d1]
 
-
+'''
 def regional_capital(model):
     r0 = 0
     r1 = 0
-    fraction = 0.3
+    fraction = 0.4
     agents = model.firms2 
     for i in range(len(agents)):
         a = agents[i]
@@ -371,15 +414,36 @@ def regional_capital(model):
             r0 += capital_stock
         elif a.region == 1:
             r1 += capital_stock
+    
     if r0 == 0:
-        r0 = r1
+        r0 = 10
     if r1 ==0:
-        r1 = r0
+        r1 = 10
+
     average_regional_cons_firm= model.datacollector.model_vars["Population_Regional_Cons_Firms"][int(model.schedule.time)]
-    firm_capital_amount0 = round( fraction * r0 / max( 1, average_regional_cons_firm[0]) , 2)
+    firm_capital_amount0 = round( fraction * r0 / max( 1, average_regional_cons_firm[0]) , 2) 
     firm_capital_amount1 =round( fraction * r1 / max( 1, average_regional_cons_firm[1]) , 2)
 
-    return [ round(r0, 2), round(r1, 2),  firm_capital_amount0,  firm_capital_amount1]
+    return [ max( round(r0, 2), 1), max( 1, round(r1, 2)),  firm_capital_amount0,  firm_capital_amount1]
+
+
+'''
+def regional_capital(model):
+    r0 = 0
+    fraction = 0.001
+    agents = model.firms2 
+    #n = len(agents)
+    for i in range(len(agents)):
+        a = agents[i]
+        #if a.type == "Cons":
+        capital_stock = sum(i.amount for i in a.capital_vintage)
+        r0 += capital_stock
+       # n+= 1
+
+   # average_regional_cons_firm= model.datacollector.model_vars["Population_Regional_Cons_Firms"][int(model.schedule.time)]
+    firm_capital_amount = max( 4, round( fraction * r0 ))
+
+    return [  round(r0, 2),  round(r0, 2),  firm_capital_amount,  firm_capital_amount]
 
 
 #-----------------PRICE------#
@@ -388,6 +452,20 @@ def price_average_cons(model):
     cons_prices = gov.av_price_cons
 
     return cons_prices
+
+
+def price_average_cons_coastal(model):
+    gov = model.governments[0]
+    cons_prices = gov.av_price_cons[0]
+
+    return cons_prices
+
+def price_average_cons_internal(model):
+    gov = model.governments[0]
+    cons_prices = gov.av_price_cons[1]
+
+    return cons_prices
+
 
 
 def quantity_ordered(model):

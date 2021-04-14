@@ -64,9 +64,9 @@ def calc_competitiveness_old(price, my_r, trade_cost):
     
 def calc_competitiveness(price, my_r, trade_cost, trade_cost_exp, unfilled_demand ):
 	if my_r == 0:
-		return [ round(-1 *price  - 1  * unfilled_demand , 8), round( -1 * price*(1+trade_cost)  -1 * unfilled_demand , 8), round( -1 * price * (1 + trade_cost_exp)  , 8)]
+		return [ round(-1 *price  - 1  * unfilled_demand , 8), round( -1 * price*(1+trade_cost)  -1 * unfilled_demand , 8), round( -1 * price * (1 + trade_cost_exp)  - 1  * unfilled_demand  , 8)]
 	elif my_r == 1:
-		return [ round(-1 * price * (1+trade_cost) -1 * unfilled_demand , 8) , round(-1 * price  -1  * unfilled_demand, 8), round( -1 * price*(1+ trade_cost_exp + trade_cost)  , 8)]
+		return [ round(-1 * price * (1+trade_cost) -1 * unfilled_demand , 8) , round(-1 * price  -1  * unfilled_demand, 8), round( -1 * price*(1+ trade_cost_exp + trade_cost) - 1  * unfilled_demand  , 8)]
 
 '''
 2.5 (9)
@@ -109,11 +109,11 @@ def calc_market_share_cons( model, lifecycle, MS_prev, comp, comp_avg, K , r ,ch
     
     if (lifecycle == 0):
         
-        K_total = model.datacollector.model_vars['Capital_Regional'][int(model.schedule.time)]
+        K_total =  model.datacollector.model_vars['Capital_Regional'][int(model.schedule.time)]
 
         ms0 = K / K_total[0]
-        ms1 = K / K_total[1]
-        ms2  = K / K_total[r]
+        ms1 = K / K_total[0]
+        ms2  = K / K_total[0]
         return [max(ms0, min_ms), max(ms1, min_ms), max(ms2, min_ms) ]
     
      # some minimum market share needed to stay

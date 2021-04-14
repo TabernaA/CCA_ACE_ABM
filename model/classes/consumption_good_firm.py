@@ -79,7 +79,7 @@ class ConsumptionGoodFirm(Agent):
         self.unfilled_demand = 0        # In case firm does not manage to fill all demand
         self.profits = 0  
         self.offers = []                # offers from capital-good firms who advertise to me
-        
+        self.unfilled_calib = 0
         #Migration tracking
         self.distances_mig = []
         self.region_history = []
@@ -148,13 +148,18 @@ class ConsumptionGoodFirm(Agent):
         #past_error = 0.65 * (self.real_demand - self.expected_production )
         expected_production = round(np.mean(local_past_demands), 4)    # expected production is the mean of the last 3    demands     
         #expected_production = self.expected_production
+        
         if self.flooded == True:
-            self.inventories = (1 - self.model.S) * self.inventories
+            #shock =   self.model.S
+            shock = np.random.beta(self.model.beta_a,self.model.beta_b)
+            #self.production_made = self.production_made * (1 - shock)
+            self.inventories = (1 - shock) * self.inventories
         
-        desired_level_inventories = 0.2 * expected_production                #set desired levelof inventories 
+        desired_level_inventories = 0.1 * expected_production    #qua era 0.15            #set desired levelof inventories 
         
-        if self.model.schedule.time < 5:
-            self.inventories = desired_level_inventories          # this is just to the beginning to let the model start smoothly 
+        if self.model.schedule.time < 10:
+            self.inventories = desired_level_inventories 
+            self.unfilled_demand = 0         # this is just to the beginning to let the model start smoothly 
         desired_production = max( 0 , expected_production + desired_level_inventories - self.inventories )
         
         ## Calculate how much I can vs I want produce ###
@@ -198,7 +203,7 @@ class ConsumptionGoodFirm(Agent):
             # unit cost advantage of new machines
             UCA = self.wage / vintage.productivity - self.wage / new_machine[0]                    #payback rule
 
-            if (UCA > 0 and (new_machine[1]/UCA <= 3)): # or vintage.age >= vintage.lifetime - 1:  # don't consider if productivity is equal, prevent division by zero
+            if (UCA > 0 and (new_machine[1]/UCA <= 6)): # or vintage.age >= vintage.lifetime - 1:  # don't consider if productivity is equal, prevent division by zero
                 replacement_investment += vintage.amount
         return replacement_investment
     
@@ -288,21 +293,28 @@ class ConsumptionGoodFirm(Agent):
         #keep track of my old productivity, before update it 
         self.productivity[0] = self.productivity[1]
         
+
+        
         ##-- determine labor demand and then hiring  the functions are in modules ---> labor dynamics ---#
         #print( self.unique_id, self.feasible_production)
         self.labor_demand, self.productivity[1] = ld.labor_demand(self.capital_vintage, self.feasible_production)
         
         if self.flooded == True:
-            self.productivity[1] = ( 1 - self.model.S) * self.productivity[1]
+            shock = np.random.beta(self.model.beta_a,self.model.beta_b)
+            self.productivity[1] = ( 1 - shock) * self.productivity[1]
+
            # print('decreasing prod cons')
+        
         
         #self.labor_demand += math.floor(self.CCA_RD_budget / self.wage )
         
         self.desired_employees, self.employees_IDs, self.open_vacancies = ld.hire_and_fire(self.labor_demand,
-                                                                                           self.employees_IDs, 
+                                                                                         self.employees_IDs, 
                                                                                            self.open_vacancies, 
                                                                                            self.model, 
                                                                                            self.unique_id)
+        
+
         '''
         if self.model.schedule.time < 10:
             self.productivity[0]=1
@@ -394,6 +406,7 @@ class ConsumptionGoodFirm(Agent):
         '''
         
         ##-- check what was my demand in both region --#
+        self.past_sales = self.regional_demand
         self.regional_demand = [round( average_regional_cons[0] * self.market_share[0], 5) , round( average_regional_cons[1] * self.market_share[1], 5)] #,  round( average_regional_cons[2] * self.market_share[2], 5)]
         self.monetary_demand = round(sum(self.regional_demand) , 6)
         
@@ -405,7 +418,8 @@ class ConsumptionGoodFirm(Agent):
         
 
         ##--labor constraint (was I able to fulfill all my demand or not?) --##
-        self.production_made = len(self.employees_IDs)  * self.productivity[1]   # - (math.floor(self.CCA_RD_budget / self.wage ) )) 
+        self.production_made = len(self.employees_IDs)  * self.productivity[1]  
+
         
         #print( "Hi there, cons firm", self.unique_id, "I got", len(self.employees_IDs), "I produced ", self.production_made)
         #print("production made ", self.production_made, "number of employees", len(self.employees_IDs), "productivity", self.productivity[1], "lifecycle", self.lifecycle)           # how much production I managed to do? (important to be staged after labor market) 
@@ -427,6 +441,9 @@ class ConsumptionGoodFirm(Agent):
         self.demand_filled = min(self.real_demand, my_production )                                                     
         self.unfilled_demand = max( 0 , self.real_demand - my_production)
         self.inventories = max(0 , my_production - self.real_demand)
+       # if self.unfilled_calib < 100:
+        #    self.unfilled_demand = 0
+         #   self.unfilled_calib += 1
       
         ##--Accounting --#
 
@@ -478,11 +495,15 @@ class ConsumptionGoodFirm(Agent):
     def update_capital(self):
         
         if self.flooded == True:
-            shock = self.model.S
+           # shock = self.model.S
+            shock = np.random.beta(self.model.beta_a,self.model.beta_b)
+             
             #self.quantity_ordered =  self.quantity_ordered * ( 1 - shock)
             for vintage in self.capital_vintage:
-                        vintage.amount = round( (1 - shock) * vintage.amount)
-                        if vintage.amount <= 0:
+                        #vintage.amount = round( (1 - shock) * vintage.amount)
+                        #if vintage.amount <= 0:
+                        if bernoulli.rvs(shock) == 1:
+                             vintage.amount == 0
                              self.capital_vintage.remove(vintage)
         
         ##-- If I did an order --##
@@ -498,8 +519,9 @@ class ConsumptionGoodFirm(Agent):
             amount_to_replace = self.scrapping_machines
             for vintage in self.capital_vintage:
                 if amount_to_replace > 0:
-                    vintage.amount -= min(vintage.amount, amount_to_replace)
-                    amount_to_replace -= vintage.amount
+                    replacement = min(vintage.amount, amount_to_replace)
+                    vintage.amount -= replacement
+                    amount_to_replace -= replacement
                     if vintage.amount == 0:
                         self.capital_vintage.remove(vintage)
                 #--remove the machines that are too old --#
@@ -558,7 +580,7 @@ class ConsumptionGoodFirm(Agent):
             '''
             previous_productivity = self.productivity[0]
             current_productivty  = self.productivity[1]
-            delta_my_productivity = (current_productivty - previous_productivity) / previous_productivity 
+            delta_my_productivity = min( 0.2 , (current_productivty - previous_productivity) / previous_productivity )
             '''
             if (previous_unemployment_rate_my_region or current_unemployment_rate_my_region)  < 0.01:
                 delta_unemployment = 0
@@ -654,21 +676,45 @@ class ConsumptionGoodFirm(Agent):
     def migrate(self):
         
         ##----stocastic barrier to migration --##
-        if  bernoulli.rvs(0.25) == 1:
+       # if  bernoulli.rvs(0.25) == 1:
             r = self.region
             #demand = [self.regional_demand[0] + self.regional_demand[2], self.regional_demand[1]]
             demand = self.regional_demand
+            past_sales = self.past_sales 
+                 
             demand_distance = 0
-            if demand[1 -r] > demand[r]:
+            if demand[1 -r] > demand[r] and demand[1 - r] > past_sales[1- r]:
                  demand_distance = (demand[r] - demand[1-r]) /  demand[r]
-            
+                 
+                 prof_distance = 0 
+                 
+             
+                 # old sales in my region
+                 past_sales_hr = np.log(past_sales[r])
+                 
+                 #old sales in foreign region
+                 past_sales_fr= np.log(past_sales[1 - r])
+                     
+                 # current sales in my region  (home region) 
+                 current_sales_hr = np.log(demand[r])
+                 
+                 # corrent sales in foreign region
+                 current_sales_fr = np.log(demand[1 -r])
+                     
+                 profitability_hr =   max( -0.15 ,  min( 0.15, current_sales_hr - past_sales_hr))
+                 profitability_fr  =   max( -0.15 , min( 0.15 , current_sales_fr - past_sales_fr))
+                 
+                 if profitability_fr > profitability_hr and profitability_fr > 0:
+                     prof_distance = max( -0.5 , (profitability_hr - profitability_fr) / profitability_hr)
+                     mp =  1 - np.exp(0.5 * demand_distance  +   0.5 * prof_distance) 
+                     
             ##--calculation of migration probability and process, modules ---> migration --##
-                 mp  = migration.firms_migration_probability( demand_distance, self.region,   self.model) # self.distances_mig)
+                   #  mp  = migration.firms_migration_probability( demand_distance, self.region,   self.model, prof_distance) # self.distances_mig)
             #print("mp is", mp
             #self.region_history.append([mp, r])
-                 if mp > 0:
-                    self.region, self.employees_IDs, self.net_worth, self.wage = migration.firm_migrate(mp, self.model, self.region, self.unique_id, self.employees_IDs, self.net_worth, self.wage, self.capital_vintage)
-        
+                     if mp > 0:
+                        self.region, self.employees_IDs, self.net_worth, self.wage = migration.firm_migrate(mp, self.model, self.region, self.unique_id, self.employees_IDs, self.net_worth, self.wage, self.capital_vintage)
+
         #if self.lifecycle < 10:# and self.unique_id % 10 != 0:
             #demand =  self.model.datacollector.model_vars["Regional_profits_cons"][int(self.model.schedule.time)]
         
@@ -685,6 +731,9 @@ class ConsumptionGoodFirm(Agent):
         self.bankrupt = None
         if self.lifecycle > 16:
                 self.migrate()
+                if self.model.governments[0].aggregate_employment[self.region] == 0:
+                        self.region, self.employees_IDs, self.net_worth, self.wage = migration.firm_migrate(1, self.model, self.region, self.unique_id, self.employees_IDs, self.net_worth, self.wage, self.capital_vintage)
+       
         
         if  self.model.S > 0:
             

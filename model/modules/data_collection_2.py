@@ -130,6 +130,31 @@ def gdp_cons(model):
             GDP1 += firm.price * firm.production_made
     return[ round(GDP0, 3), round(GDP1, 3), GDP0 + GDP1]
 
+
+
+def real_gdp_cons_reg_0(model):
+    GDP0 = 0
+    agents = model.firms2 #model.schedule.agents
+    for i in range(len(agents)):
+        firm = agents[i]
+        #if firm.type == "Cons":
+        if firm.region == 0:
+            GDP0 += firm.production_made
+
+    return round(GDP0)
+
+
+def real_gdp_cons_reg_1(model):
+    GDP0 = 0
+    agents = model.firms2 #model.schedule.agents
+    for i in range(len(agents)):
+        firm = agents[i]
+        #if firm.type == "Cons":
+        if firm.region == 1:
+            GDP0 += firm.production_made
+
+    return round(GDP0)
+
 def real_gdp_cons(model):
     GDP0 = 0
     GDP1 = 0
@@ -204,6 +229,33 @@ def investment(model):
 
     return[ round(I0, 3), round(I1, 3), I0 + I1 ]
 
+
+
+def investment_coastal(model):
+    I0 = 0
+    agents = model.firms2  #model.schedule.agents
+    for i in range(len(agents)):
+        firm = agents[i]
+        #if firm.type == "Cons":
+        if firm.region == 0:
+            I0 += firm.investment_cost
+
+    return round(I0, 3)
+
+def investment_inland(model):
+    I0 = 0
+    agents = model.firms2  #model.schedule.agents
+    for i in range(len(agents)):
+        firm = agents[i]
+        #if firm.type == "Cons":
+        if firm.region == 1:
+            I0 += firm.investment_cost
+
+    return round(I0, 3)
+
+
+
+
 def inventories(model):
     INV0 = 0
     INV1 = 0
@@ -228,6 +280,20 @@ def inventories(model):
 def consumption(model):
     gov = model.governments[0]
     cons = gov.aggregate_cons
+    
+    return cons #,  old_exp_C * ( 1 + constant_g)]
+
+
+
+def consumption_coastal(model):
+    gov = model.governments[0]
+    cons = gov.aggregate_cons[0]
+    
+    return cons #,  old_exp_C * ( 1 + constant_g)]
+
+def consumption_inland(model):
+    gov = model.governments[0]
+    cons = gov.aggregate_cons[1]
     
     return cons #,  old_exp_C * ( 1 + constant_g)]
 

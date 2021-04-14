@@ -36,7 +36,7 @@ class Household(Agent):
         
     def migration(self):
     
-        if bernoulli.rvs(0.25) == 1:# and self.model.schedule.time > self.model.start_migration:
+       # if bernoulli.rvs(0.25) == 1:# and self.model.schedule.time > self.model.start_migration:
             
             '''
             if self.employer_ID != None:
@@ -64,7 +64,7 @@ class Household(Agent):
 
     def stage0(self):
         
-        if self.lifecycle > 12: # and  self.model.schedule.time > self.migration_start:
+        if self.lifecycle > 16: # and  self.model.schedule.time > self.migration_start:
           #  if self.employer_ID == None:
                 #if self.employer_ID % 10 != 0:
                self.migration()

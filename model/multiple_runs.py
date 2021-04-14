@@ -23,14 +23,14 @@ import pandas as pd
 
 
 runs= 50
-steps =  400
+steps =  500
 macro_variables = []
 micro_variables = []
 model_lists = []
 for i in range(runs):
     random.seed(i)
     np.random.seed(i)
-    model = KSModel(F1 = 50, F2 =250, H = 3500, B= 1,  T= 3, S = 5)
+    model = KSModel(F1 = 50, F2 =250, H = 3500, B= 1,  T= 2, seed = i , S = 0)
     model.reset_randomizer(i )
     print("#-------------- iteration", i+1, "---------------#")
     for j in range(steps):
@@ -91,12 +91,15 @@ for i in range(runs):
     macro_variables.append(macro_variable)
 #df_multiple_runs = pd.DataFrame(macro_variables) 
 
+result_No_T002 = pd.concat(macro_variables, axis = 1 , copy = False)
 
-result_0 = pd.concat(macro_variables, axis = 1 , copy = False)
+result_1 = pd.concat(macro_variables, axis = 1 , copy = False)
+
+result_No = pd.concat(macro_variables, axis = 1 , copy = False)
 
 
 ## NEXT WITH prob shock
-result_1 = pd.concat(macro_variables, axis = 1 , copy = False)
+result_WITH = pd.concat(macro_variables, axis = 1 , copy = False)
 micro_result_1 = pd.concat(micro_variables, axis = 1)
 
 '''
@@ -204,6 +207,7 @@ sns.barplot(x = a.index.get_level_values('Year post flood') , y = "Firms", hue =
 plt.show()
 '''
 
+result_1 = result_1.iloc[:, 0:860]
 
 transition = 15
 #result_1.to_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\T002_S01_100RUNSb.csv')         
@@ -462,22 +466,24 @@ df_s_0 = pd.concat([df_s_0a, df_s_0b, df_s_0c], axis = 1)
 df_s_030 = pd.concat([df_s_030a, df_s_030b,df_s_030c], axis = 1)
 df_s_050 = pd.concat([df_s_050a, df_s_050b, df_s_050a, df_s_050e], axis = 1) #, result_1,  df_s_050c ], axis = 1) #df_s_050c], axis = 1)
 '''
-df_s_050 = pd.concat(macro_variables_S05_T003_SHOCK100, axis = 1 , copy = False)
-df_s_050.to_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\S05_T003_SHOCK100.50runs.csv')  
-df_s_050 = pd.read_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\S05_T003_SHOCK100_50runs.csv')
-df_s_0 = result_1
-df_s_0.to_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\S0_T003_50RUNS.csv')  
-df_s_0 = pd.read_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\S0_T003_50RUNS.csv')  
+a
 
-df_s_030 =pd.read_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\S05_T003_SHOCK150_50runs.csv')
+df_s_050 = result_WITH
+df_s_050.to_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\test_S5_RP.csv')  
+df_s_050 = pd.read_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\test_S5_RP.csv')
+df_s_0 = result_1
+df_s_0.to_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\t004_s0_RP_50runs.csv')  
+df_s_0 = pd.read_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\test_s0_RP.csv')  
+
+df_s_030 =pd.read_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\test_S5_RP_S_bern_100runs.csv')
 df_s_030 = result_1
-df_s_030.to_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\S05_T003_SHOCK150_50runs.csv')  
+df_s_030.to_csv(r'C:\Users\tabernaa\Documents\PHD UTWENTE\Research\first_model\Versions\Last\final\model\data_results\t004_S5_RP_S_bern_50runs.csv')  
 
 drop_firm = 0
 drop_end = 0
 
-firms_0_s050 =  af.mean_variable(df_s_050, 'Population_Region_0_Cons_Firms', drop_firm, drop_end) /250
-firms_0_s050_std =  af.std_dev_variable(df_s_050, 'Population_Region_0_Cons_Firms', drop_firm, drop_end)  / 250  / np.sqrt(800)# / 250 #* 2
+#firms_0_s050 =  af.mean_variable(df_s_050, 'Population_Region_0_Cons_Firms', drop_firm, drop_end) /250
+#firms_0_s050_std =  af.std_dev_variable(df_s_050, 'Population_Region_0_Cons_Firms', drop_firm, drop_end)  / 250  / np.sqrt(800)# / 250 #* 2
 #firms_1_s050 =  af.mean_variable(df_s_050, 'Cons region 1', drop_firm) * 2
 #firms_0_s025a =  mean_variable(df_s_025a, 'Cons region 0', drop_firm)
 #firms_1_s025a =  mean_variable(df_s_025a, 'Cons region 1', drop_firm)
@@ -503,10 +509,10 @@ ax = fig.add_subplot(111)
 #ax.plot( firms_1_t001, '--', color = 'black', )	
 #ax.plot( firms_0_s010,  label = 'Dc = 0.1', color = 'blue')	
 #ax.fill_between( firms_0_s010.index, firms_0_s010 - firms_0_s010_std, firms_0_s010 + firms_0_s010_std, color = 'blue', alpha = .1 )
-ax.plot( firms_0_s050,  label = 'Shock at t = 100', color = 'black')	
-ax.fill_between( firms_0_s050.index, firms_0_s050 - firms_0_s050_std, firms_0_s050 + firms_0_s050_std, color = 'black', alpha = .1 )
+#ax.plot( firms_0_s050,  label = 'Shock at t = 150', color = 'black')	
+#ax.fill_between( firms_0_s050.index, firms_0_s050 - firms_0_s050_std, firms_0_s050 + firms_0_s050_std, color = 'black', alpha = .1 )
 #ax.plot( firms_1_s050, label = 'F = 0.5', color = 'red', )	
-ax.plot(  firms_0_s030,  label = 'Shock at t = 150', color = 'purple')	
+ax.plot(  firms_0_s030,  label = 'No shock T = 002', color = 'purple')	
 ax.fill_between( firms_0_s030.index, firms_0_s030 - firms_0_s030_std, firms_0_s030 + firms_0_s030_std , color = 'purple', alpha = .1)
 #ax.plot(  firms_1_s025,'--', label = 'F = 0.25',  color = 'red', )	
 ax.plot(  firms_0_s0, label = 'No shock', color = 'gold')
@@ -544,8 +550,8 @@ drop_h = 0
 
 drop_firm = 0
 
-households_0_s050 =  af.mean_variable(df_s_050, "Population_Region_0_Households", drop_firm) /3500
-households_0_s050_std =  af.std_dev_variable(df_s_050, "Population_Region_0_Households" , drop_firm)  / 3500  / np.sqrt(800)# / 250 #* 2
+#households_0_s050 =  af.mean_variable(df_s_050, "Population_Region_0_Households", drop_firm) /3500
+#households_0_s050_std =  af.std_dev_variable(df_s_050, "Population_Region_0_Households" , drop_firm)  / 3500  / np.sqrt(800)# / 250 #* 2
 #firms_1_s050 =  af.mean_variable(df_s_050, 'Cons region 1', drop_firm) * 2
 #firms_0_s025a =  mean_variable(df_s_025a, 'Cons region 0', drop_firm)
 #firms_1_s025a =  mean_variable(df_s_025a, 'Cons region 1', drop_firm)
@@ -569,8 +575,8 @@ ax = fig.add_subplot(111)
 
 #ax.plot( firms_0_t001,  label = 'F = 0', color = 'black')	
 #ax.plot( firms_1_t001, '--', color = 'black', )	
-ax.plot( households_0_s050,  label = 'Dc = 0.5', color = 'black')	
-ax.fill_between( households_0_s050.index, households_0_s050 - households_0_s050_std, households_0_s050 + households_0_s050_std, color = 'black', alpha = .1 )
+#ax.plot( households_0_s050,  label = 'Dc = 0.5', color = 'black')	
+#ax.fill_between( households_0_s050.index, households_0_s050 - households_0_s050_std, households_0_s050 + households_0_s050_std, color = 'black', alpha = .1 )
 #ax.plot( firms_1_s050, label = 'F = 0.5', color = 'red', )	
 ax.plot(  households_0_s030,  label = 'Dc = 0.3', color = 'purple')	
 ax.fill_between( households_0_s030.index, households_0_s030 - households_0_s030_std, households_0_s030 + households_0_s030_std , color = 'purple', alpha = .1)
@@ -590,18 +596,18 @@ plt.show()
 '''
 WAGES
 '''
-wage_0_s050 =  af.mean_variable(df_s_050, "Av wage region 0", drop_firm) / af.mean_variable(df_s_050, "Cons price region 0", drop_firm)
-wage_1_s050 =  af.mean_variable(df_s_050, "Av wage region 1", drop_firm) / af.mean_variable(df_s_050, "Cons price region 1", drop_firm)
+wage_0_s050 =  af.mean_variable(df_s_050, "Av wage region 0", drop_firm)  #  / af.mean_variable(df_s_050, "Cons price region 0", drop_firm)
+wage_1_s050 =  af.mean_variable(df_s_050, "Av wage region 1", drop_firm) #/ af.mean_variable(df_s_050, "Cons price region 1", drop_firm)
 
 wage_ratio_shock_100 = wage_0_s050  /  wage_1_s050 
 
-wage_0_s030 =  af.mean_variable(df_s_030, "Av wage region 0", drop_firm) / af.mean_variable(df_s_030, "Cons price region 0", drop_firm)
-wage_1_s030 =  af.mean_variable(df_s_030, "Av wage region 1", drop_firm) / af.mean_variable(df_s_030, "Cons price region 0", drop_firm)
+#wage_0_s030 =  af.mean_variable(df_s_030, "Av wage region 0", drop_firm) / af.mean_variable(df_s_030, "Cons price region 0", drop_firm)
+#wage_1_s030 =  af.mean_variable(df_s_030, "Av wage region 1", drop_firm) / af.mean_variable(df_s_030, "Cons price region 0", drop_firm)
 
-wage_ratio_shock_150 = wage_0_s030  /  wage_1_s030 
+#wage_ratio_shock_150 = wage_0_s030  /  wage_1_s030 
 
-wage_0_s0 =  af.mean_variable(df_s_0, "Av wage region 0", drop_firm) / af.mean_variable(df_s_0, "Cons price region 0", drop_firm)
-wage_1_s0 =  af.mean_variable(df_s_0, "Av wage region 1", drop_firm) / af.mean_variable(df_s_0, "Cons price region 0", drop_firm)
+wage_0_s0 =  af.mean_variable(df_s_0, "Av wage region 0", drop_firm) # / af.mean_variable(df_s_0, "Cons price region 0", drop_firm)
+wage_1_s0 =  af.mean_variable(df_s_0, "Av wage region 1", drop_firm) #/ af.mean_variable(df_s_0, "Cons price region 0", drop_firm)
 
 wage_ratio_no_shock = wage_0_s0  /  wage_1_s0
 
@@ -613,11 +619,11 @@ ax = fig.add_subplot(111)
 
 #ax.plot( firms_0_t001,  label = 'F = 0', color = 'black')	
 #ax.plot( firms_1_t001, '--', color = 'black', )	
-#ax.plot( wage_ratio_shock_100,  label = 't = 100', color = 'black')	
+ax.plot( wage_ratio_shock_100,  label = 't = 100', color = 'black')	
 #ax.plot( wage_1_s050, '--', label = 't = 100 region 1', color = 'black')	
 
 
-ax.plot( wage_ratio_shock_150,  label = 't = 150', color = 'purple')	
+#ax.plot( wage_ratio_shock_150,  label = 't = 150', color = 'purple')	
 #ax.plot( wage_1_s030,  label = 't = 150 region 1', color = 'purple')	
 #ax.plot( firms_1_s050, label = 'F = 0.5', color = 'red', )	
 #ax.plot( wage_0_s0,  label = ' region 0', color = 'gold')	
@@ -636,7 +642,7 @@ PRODUCTIVITY
 '''
 
 delta_prod_t_100 =  af.mean_variable(df_s_050, "Delta prod region 0", drop_firm)
-delta_prod_t_150 =  af.mean_variable(df_s_030, "Delta prod region 0", drop_firm)
+#delta_prod_t_150 =  af.mean_variable(df_s_030, "Delta prod region 0", drop_firm)
 delta_prod =  af.mean_variable(df_s_0, "Delta prod region 0", drop_firm)
 
 
@@ -652,7 +658,7 @@ ax.plot(delta_prod_t_100,  label = 't = 100', color = 'black')
 #ax.plot( wage_1_s050, '--', label = 't = 100 region 1', color = 'black')	
 
 
-ax.plot(delta_prod_t_150,  label = 't = 150', color = 'purple')	
+#ax.plot(delta_prod_t_150,  label = 't = 150', color = 'purple')	
 #ax.plot( wage_1_s030,  label = 't = 150 region 1', color = 'purple')	
 #ax.plot( firms_1_s050, label = 'F = 0.5', color = 'red', )	
 #ax.plot( wage_0_s0,  label = ' region 0', color = 'gold')	
@@ -1405,9 +1411,10 @@ df_pi_int = df_pi[['Cons price region 0', 'Prod region 0', 'Av wage region 0', '
 
 transition = 0 
 macro_variables_S05_T003_SHOCK100 = macro_variables
-for i in range(len(macro_variables_S05_T003_SHOCK100)):
+for i in range(len(macro_variables)):
     print(i)
-    macro_variable = macro_variables_S05_T003_SHOCK100[i]
+    macro_variable = macro_variables[i]
+  #  macro_shock = macro_variables_S05_T003_SHOCK100[i]
 #plot_list_2var_comp_first_difference(macro_variable.GDP,macro_variable.Consumption_firms_av_prod ,200 , 50, "Turning the tide of agglomeration")
 #af.plot_list_log(macro_variable.INVESTMENT, range(transition, steps), "Investment")
 #af.plot_list_log(macro_variable.CONSUMPTION, range(transition, steps), "Consumption")
@@ -1415,13 +1422,14 @@ for i in range(len(macro_variables_S05_T003_SHOCK100)):
 #plot_list(macro_variable.Aggregate_Employment, range(transition, steps), "Aggregate Employment")
 #plot_list(macro_variable.Population_Regional, range(steps), "Population")
 #af.plot_list_log(macro_variable.Average_Salary, range(transition, steps) , "Average Salary")
-  #  af.plot_list(macro_variable.Population_Regional_Households, range(transition,steps), "Number of households")
+    af.plot_list(macro_variable.Population_Regional_Households, range(transition,steps), "Number of households")
    # af.plot_list_log(macro_variable.Cosumption_price_average,  range(transition,  steps) , "Consumption price average")
     af.plot_list(macro_variable.Population_Regional_Cons_Firms, range(transition, steps), "Number of consumption firms")
+    #af.plot_list(macro_shock.Population_Regional_Cons_Firms, range(transition, steps), "Number of consumption firms")
 #af.plot_list_log(macro_variable.Capital_firms_av_prod, range(transition, steps), " Average productivity Cap firms")
     #af.plot_list(macro_variable.Population_Regional_Cap_Firms, range(transition,  steps), "Number of capital  firms")
 #af.plot_list_log(macro_variable.Consumption_firms_av_prod, range(transition, steps ), " Average productivity Cons firms")
-#af.plot_list(macro_variable.Unemployment_Regional, range( transition, steps), "Unemployment rate") 
+    af.plot_list(macro_variable.Unemployment_Regional, range( transition, steps), "Unemployment rate") 
 #af.plot_list_log(macro_variable.GDP, range( steps), "GDP") 
 
 #af.plot_list_2var_reg(macro_variable.GDP_cap, macro_variable#.INVESTMENT, range(steps), "Check account identity cap ")

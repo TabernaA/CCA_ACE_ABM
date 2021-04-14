@@ -62,7 +62,7 @@ class Government (Agent):
         self.cap_av_prod = [ 0, 0, 0, 0]
         self.export_demand =  300
         self.export_demand_list = []
-        self.fraction_exp = 0.0125
+        self.fraction_exp = 0.01
         self.best_firm1 = [0,0]
         
         #self.open_vacancies = [ ]
@@ -72,7 +72,8 @@ class Government (Agent):
             average_salaries = self.average_wages
            # max_av_salary = max(average_salaries)
             fraction = 0.6
-            self.minimum_wage_region = [max( 1, average_salaries[0] * fraction), max( 1, average_salaries[1] * fraction)]
+            higher_regional_wage = max(average_salaries) / 2
+            self.minimum_wage_region = [max( 1, average_salaries[0] * fraction, higher_regional_wage ), max( 1, average_salaries[1] * fraction, higher_regional_wage)]
             #self.unemployment_subsidy = [ self.minimum_wage_region * 0.9, self.minimum_wage_region * 0.9]
             regional_wage_regions =  self.minimum_wage_region
             fraction_sub = 0.8
@@ -269,12 +270,13 @@ class Government (Agent):
                     
                     firm_cap.net_worth = average_regional_NW[r] * 0.6
                     #inv_distance = (regional_inv[r] - regional_inv[1 - r]) /  max(regional_inv)
+                    '''
                     inv_distance = 0 #  self.model.datacollector.model_vars["INVESTMENT"][int(self.model.schedule.time)][r + 3]
                     
                     mp = migration.firms_migration_probability( inv_distance, r, self.model, w_1 = 0, w_2 = 1  )
                     #firm_cap.region_history.append([mp, r])
                     firm_cap.region, firm_cap.employees_IDs, firm_cap.net_worth ,  firm_cap.wage= migration.firm_migrate(mp, firm_cap.model, r, firm_cap.unique_id, firm_cap.employees_IDs, firm_cap.net_worth, regional_wage[r],0)
-                   
+                    '''
                     r = firm_cap.region
                    # current_average_price =  self.model.datacollector.model_vars["Capital_price_average"][int(self.model.schedule.time)][r]
                     
@@ -282,7 +284,7 @@ class Government (Agent):
                     top_prod_region = self.model.datacollector.model_vars["Top_prod"][int(self.model.schedule.time )][r]
                         #print(prod0)
 
-                    a = (1 - 0.15 + beta.rvs(3,3)*(0.15)) 
+                    a = (1 - 0.1 + beta.rvs(3,3)*(0.1)) 
                     firm_cap.productivity[0] = top_prod_region[0] * a 
                     firm_cap.productivity[1] = top_prod_region[1] * a
                     firm_cap.previous_productivity = firm_cap.productivity
@@ -325,7 +327,7 @@ class Government (Agent):
         all_firms_cons = self.model.firms2
         
         for firm in all_firms_cons:
-            if  (firm.market_share[0] + firm.market_share[1]) < 0.0025 or  firm.labor_demand == 0: #firm.lifecycle > 6):
+            if  sum(firm.market_share) < 0.003 or  firm.labor_demand == 0: #firm.lifecycle > 6):
                 if firm.lifecycle > 6:
                 # fire employees
                     firm.bankrupt = len(firm.employees_IDs)
@@ -351,12 +353,14 @@ class Government (Agent):
                    # current_average_price =  self.model.datacollector.model_vars["Cosumption_price_average"][int(self.model.schedule.time)]
                   #  average_regional_cons=  self.aggregate_cons 
                     
-                    firm.net_worth = average_regional_NW[r] * 0.5
+                    firm.net_worth = average_regional_NW[r] * 0.5 
                     firm.credit_rationed = False
                     firm.capital_vintage = []
                     
+                    
                     ###---location of the firm  ---###
                     #cons_distance = (average_regional_cons[r] - average_regional_cons[1 - r]) /  max(average_regional_cons)
+                    '''
                     cons_distance =   0 #average_regional_cons[3 + r]
                     
                     
@@ -364,7 +368,12 @@ class Government (Agent):
                     #print("mp is", mp
                     #firm.region_history.append([mp, r])
                     firm.region, firm.employees_IDs, firm.net_worth,  firm.wage = migration.firm_migrate(mp, firm.model, r, firm.unique_id, firm.employees_IDs, firm.net_worth, regional_wage[r], 0) 
+                    '''
                     r = firm.region
+                    
+                    if self.aggregate_employment[r] == r or self.unemployment_rates[r] == 1:
+                        firm.region, firm.employees_IDs, firm.net_worth,  firm.wage = migration.firm_migrate(1, firm.model, r, firm.unique_id, firm.employees_IDs, firm.net_worth, regional_wage[r], 0) 
+                        
                     
                     firm.capital_amount =  self.model.datacollector.model_vars["Capital_Regional"][int(self.model.schedule.time)][r + 2]
                     '''
@@ -409,6 +418,8 @@ class Government (Agent):
                     #firm.investment_cost = 0
                     firm.market_share_history = []
                     firm.past_demands = []
+                    firm.production_made = 0
+                    
                         #firm.market_share_history[ 0.9 * self.average_normalized_market_share, 0.9 * self.average_normalized_market_share]      # the firms gets a fraction (0.9) of the avergae
                     
                     
@@ -427,11 +438,11 @@ class Government (Agent):
         salaries  = self.average_wage_regions(self.model.firms_1_2, True)
         self.salaries_cons  = self.average_wage_regions(self.model.firms2)
         self.salaries_cap  = self.average_wage_regions(self.model.firms1)
-        av_sal0 = self.salaries_cons[0]
-        av_sal1 = self.salaries_cons[1]
+        av_sal0 = salaries[0] / self.av_price_cons[0]
+        av_sal1 = salaries[1]/ self.av_price_cons[1]
         RAE0 = salaries[2]
         RAE1 = salaries[3]
-        salary_diffrence0, salary_diffrence1,= self.variable_difference(av_sal0, av_sal1, True)
+        salary_diffrence0, salary_diffrence1 = self.variable_difference(av_sal0, av_sal1, True)
         self.average_wages =  [ salaries[0], salaries[1], salary_diffrence0, salary_diffrence1]
 
         ## ---- EMPLOYMENT --#
@@ -474,7 +485,7 @@ class Government (Agent):
             if int(self.model.schedule.time) - 1 == self.model.shock_time:
         
                # print('cut cons')
-                shock = self.model.S 
+                shock = self.model.S #np.random.beta(self.model.beta_a,self.model.beta_b)
                 C0 = (1 - shock) * C0
         
        # cons_diffrence0, cons_diffrence1 = self.variable_difference(C0, C1, True)    
@@ -516,6 +527,22 @@ class Government (Agent):
     
    
     def produtivity_calculation(self):
+        '''
+        AE0 = 0
+        AE1 = 0
+        firms = self.model.firms2
+        for i in range(len(firms)):
+            i = firms[i]
+            if i.region == 0:
+                AE0 += len(i.employees_IDs)
+            if i.region == 1:
+                AE1 += len(i.employees_IDs)
+                
+        AEs = [AE0, AE1]
+        '''
+        
+            
+            
         
         self.regional_av_prod = self.productivity_firms(self.model.firms_1_2, self.aggregate_employment)
         #self.cap_av_prod = self.productivity_firms(self.model.firms1)
@@ -526,11 +553,11 @@ class Government (Agent):
         
         self.av_price_cons = self.price_average(self.model.firms2)
         self.av_price_cap = self.price_average(self.model.firms1)
-        prices_cons = self.av_price_cons
-        av_norm_price_reg_0 = prices_cons[0] /sum(prices_cons)
-        av_norm_price_reg_1 = prices_cons[1] /sum(prices_cons)
-        comp_0 = -1 * av_norm_price_reg_0
-        comp_1 = -1 * av_norm_price_reg_0 * ( 1 + self.model.transport_cost)
+        #prices_cons = self.av_price_cons
+        #av_norm_price_reg_0 = prices_cons[0] /sum(prices_cons)
+        #av_norm_price_reg_1 = prices_cons[1] /sum(prices_cons)
+        #comp_0 = -1 * av_norm_price_reg_0
+        #comp_1 = -1 * av_norm_price_reg_0 * ( 1 + self.model.transport_cost)
         
         
         
@@ -656,12 +683,17 @@ class Government (Agent):
         else:
             av_prod1 = productivity1_old
         
-        prod_increase_0 = round( (av_prod0 - productivity0_old)/ productivity0_old, 3)
-        prod_increase_1 = round( (av_prod1 - productivity1_old)/ productivity1_old , 3)
+        prod_increase_0 = max( -0.5 , min( 0.5 , round( (av_prod0 - productivity0_old)/ productivity0_old, 3)))
+        prod_increase_1 = max( -0.5, min( 0.5 , round( (av_prod1 - productivity1_old)/ productivity1_old , 3)))
         
         return [av_prod0, av_prod1,  prod_increase_0, prod_increase_1 ]
         
     
+    def climate_damages(self):
+         self.flooded = False
+         if self.region == 0 and (int(self.model.schedule.time) == self.model.shock_time or int(self.model.schedule.time) == self.model.shock_time + 100):
+             self.flooded == True 
+             print('gov flood')
     '''
     def climate_damages(self):
         #self.flooded = False
@@ -694,6 +726,17 @@ class Government (Agent):
         #print('gov')
         if self.region == 0:
            self.minimum_wage()
+           if int(self.model.schedule.time) == 10:
+                self.model.transport_cost = self.model.transport_cost / 10
+                self.model.transport_cost_RoW =  self.model.transport_cost_RoW / 10
+                '''
+                agents = self.model.firms2
+               
+                for i in range(len(agents)):
+                    agent = agents[i]
+                    agent.market_share[2] = 1/len(agents)
+                '''
+                print('we')
            
         
         pass
@@ -717,9 +760,10 @@ class Government (Agent):
         if self.region == 0:
            self.comp_norm()
            self.market_share_normalizer_cap()
+           self.prices_calculation()
            self.wage_and_cons_unempl()
            self.produtivity_calculation()
-           self.prices_calculation()
+           
           # self.determine_subsidy()
         
 
@@ -750,6 +794,7 @@ class Government (Agent):
         #self.determine_subsidy()
 
     def stage6(self):
+       # self.climate_damages()
         pass
        # self.collect_taxes()
         

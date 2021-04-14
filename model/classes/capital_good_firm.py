@@ -17,11 +17,12 @@ from model.modules import labor_dynamics as ld
 from model.modules import migration as migration
 #from scipy.stats import bernoulli
 import math
-\
+
 import bisect
 #import numpy as np
 
 from scipy.stats import bernoulli
+
 from scipy.stats import beta
 
 
@@ -88,7 +89,7 @@ class CapitalGoodFirm(Agent):
             self.productivity[1] =  self.productivity[1]
         '''
         if self.flooded == True:
-            shock = self.model.S
+            shock = np.random.beta(self.model.beta_a,self.model.beta_b)
             self.pre_shock_prod = self.productivity[1]
            # print(self.productivity[1])
             #damages = min( self.model.S / self.CCA_resilience[0], self.model.S)
@@ -121,8 +122,8 @@ class CapitalGoodFirm(Agent):
         Z=0.3
         a=3
         b=3
-        x_low=-0.15
-        x_up=0.15
+        x_low=-0.1
+        x_up=0.1
         in_productivity = [0,0]
 
     # Bernoulli draw to determine success (1) or failure (0)
@@ -384,6 +385,7 @@ class CapitalGoodFirm(Agent):
     Open vacancies or fire employees based on demand in this period
     '''
     def hire_and_fire_cap(self):
+        self.past_demand = self.real_demand_cap
         self.real_demand_cap = [0,0]
         if self.regional_orders != []:
             demand_int = 0
@@ -422,8 +424,8 @@ class CapitalGoodFirm(Agent):
         
         self.production_made = max( 0 , round(  len(self.employees_IDs)  * self.productivity[1] , 2))   #   self.RD_budget  /self.wage )   
         if self.flooded == True:
-            shock = self.model.S
-            self.production_made = ( 1 - shock) * self.production_made
+            shock = np.random.beta(self.model.beta_a,self.model.beta_b)
+            self.production_made = round(( 1 - shock) * self.production_made)
         #if self.model.schedule.time == (self.model.shock_time):  
          #   damages = min( self.model.S / self.CCA_resilience[1], self.model.S)
           #  self.production_made = (1 - damages) * self.production_made
@@ -503,18 +505,49 @@ class CapitalGoodFirm(Agent):
     def migrate(self):
         ##-- stochastic entry barrier to migration process --##
        
-        if bernoulli.rvs(0.25) == 1:
+    #    if bernoulli.rvs(0.25) == 1:
         #if self.unique_id % 10 != 0:
            
            # unemployment_subsidy = self.model.datacollector.model_vars["Regional_unemployment_subsidy"][int(self.model.schedule.time)]
             demand_distance = 0 
             demand = self.real_demand_cap
-            if demand[1] >= demand[0]:
+            past_sales = self.past_demand
+            if demand[1] > demand[0] and demand[1] > past_sales[1]:
+                
                demand_distance = ( demand[0] - demand[1]) / (demand[0] + 0.001)
-            
-               mp = migration.firms_migration_probability( demand_distance, self.region,  self.model)
-               if mp> 0:
-                   self.region, self.employees_IDs, self.net_worth, self.wage = migration.firm_migrate(mp, self.model, self.region, self.unique_id, self.employees_IDs, self.net_worth, self.wage, 0)
+               prof_distance = 0 
+                
+              # r = self.region
+                 
+               # od sales in my region
+               
+               past_sales[0] = float(past_sales[0])
+               past_sales[1] = float(past_sales[1])
+               demand[1] =float(demand[1])
+               demand[0] =float(demand[0])
+               
+               
+               past_sales_hr = max( 0 , np.log(past_sales[0]))
+        
+               #old sales in foreign region
+               past_sales_fr= max( 0 , np.log(past_sales[1]))
+                     
+               # current sales in my region  (home region) 
+               current_sales_hr = max( 0 , np.log(demand[0]))
+                 
+               # corrent sales in foreign region
+               current_sales_fr =  max( 0 ,  np.log(demand[1]))
+                     
+               profitability_hr =   max( -0.15 ,  min( 0.15, current_sales_hr - past_sales_hr))
+               profitability_fr  =   max( -0.15 , min( 0.15 , current_sales_fr - past_sales_fr))
+                 
+               if profitability_fr > profitability_hr and profitability_fr > 0:
+                    prof_distance = max( -0.5 , (profitability_hr - profitability_fr) / profitability_fr)
+                
+                    mp =  1 - np.exp(0.5 * demand_distance  +   0.5 * prof_distance) 
+                    
+                    if mp> 0:
+                         self.region, self.employees_IDs, self.net_worth, self.wage = migration.firm_migrate(mp, self.model, self.region, self.unique_id, self.employees_IDs, self.net_worth, self.wage, 0)
 
 
     
@@ -524,8 +557,9 @@ class CapitalGoodFirm(Agent):
        # if self.region == 0:
         #    self.CCA_RD()
         if self.lifecycle > 16:
-         #   if self.model.schedule.time > 80:
-                self.migrate()
+            self.migrate()
+            if self.model.governments[0].aggregate_employment[self.region] == 0:
+                        self.region, self.employees_IDs, self.net_worth, self.wage = migration.firm_migrate(1, self.model, self.region, self.unique_id, self.employees_IDs, self.net_worth, self.wage, 0)
             #print(self.region, self.productivity)
             #if self.sales > 0:
            
