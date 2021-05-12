@@ -13,13 +13,13 @@ from mesa.datacollection import DataCollector
 #from model.modules.datacollection import DataCollector
 #from mesa.batchrunner import BatchRunner
 #import random
-from model.classes.schedule import StagedActivationByType
-from model.classes.capital_good_firm import CapitalGoodFirm
-from model.classes.consumption_good_firm import ConsumptionGoodFirm
-from model.classes.household import Household
-from model.classes.government import Government
-from model.modules.data_collection import *
-from model.modules.data_collection_2 import *
+from CCA_ACE_ABM.model.classes.schedule import StagedActivationByType
+from CCA_ACE_ABM.model.classes.capital_good_firm import CapitalGoodFirm
+from CCA_ACE_ABM.model.classes.consumption_good_firm import ConsumptionGoodFirm
+from CCA_ACE_ABM.model.classes.household import Household
+from CCA_ACE_ABM.model.classes.government import Government
+from CCA_ACE_ABM.model.modules.data_collection import *
+from CCA_ACE_ABM.model.modules.data_collection_2 import *
 
 #   def __init__(self, F1 = 5, F2= 10, H= 10, B= 1, T= 0.02, S = 0.1, width=1, height=2):
 class KSModel(Model):
